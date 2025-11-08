@@ -90,8 +90,8 @@ const Dashboard = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
+        <div className="mb-8 animate-slide-up">
+          <h1 className="text-4xl font-bold mb-2 neon-text">
             Welcome back, {profile?.full_name || "Coder"}! 👋
           </h1>
           <p className="text-muted-foreground">Here's your coding progress</p>
@@ -99,7 +99,7 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-primary/20 bg-gradient-card">
+          <Card className="border-primary/30 bg-gradient-card neon-border hover:shadow-glow-pink transition-all animate-slide-up" style={{animationDelay: '0.1s'}}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Problems Solved
@@ -107,11 +107,11 @@ const Dashboard = () => {
               <Target className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{profile?.problems_solved || 0}</div>
+              <div className="text-3xl font-bold text-primary">{profile?.problems_solved || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-accent/20 bg-gradient-card">
+          <Card className="border-accent/30 bg-gradient-card neon-border hover:shadow-glow-cyan transition-all animate-slide-up" style={{animationDelay: '0.2s'}}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Score
@@ -119,11 +119,11 @@ const Dashboard = () => {
               <Trophy className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{profile?.total_score || 0}</div>
+              <div className="text-3xl font-bold text-accent">{profile?.total_score || 0}</div>
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/20 bg-gradient-card">
+          <Card className="border-destructive/30 bg-gradient-card neon-border hover:shadow-glow-purple transition-all animate-slide-up" style={{animationDelay: '0.3s'}}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Current Streak
@@ -131,11 +131,11 @@ const Dashboard = () => {
               <Flame className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{profile?.current_streak || 0} 🔥</div>
+              <div className="text-3xl font-bold text-destructive">{profile?.current_streak || 0} 🔥</div>
             </CardContent>
           </Card>
 
-          <Card className="border-success/20 bg-gradient-card">
+          <Card className="border-success/30 bg-gradient-card neon-border hover:shadow-glow-cyan transition-all animate-slide-up" style={{animationDelay: '0.4s'}}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Badges Earned
@@ -143,17 +143,17 @@ const Dashboard = () => {
               <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{badges.length}</div>
+              <div className="text-3xl font-bold text-success">{badges.length}</div>
             </CardContent>
           </Card>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Daily Problem */}
-          <Card className="border-primary/30 shadow-md">
+          <Card className="border-primary/30 shadow-glow-pink neon-border bg-gradient-card animate-slide-up" style={{animationDelay: '0.5s'}}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 neon-text">
+                <Code2 className="h-5 w-5 text-primary animate-neon-pulse" />
                 Today's Challenge
               </CardTitle>
             </CardHeader>
@@ -167,10 +167,10 @@ const Dashboard = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      dailyProblem.difficulty === 'easy' ? 'bg-success/20 text-success' :
-                      dailyProblem.difficulty === 'medium' ? 'bg-accent/20 text-accent' :
-                      'bg-destructive/20 text-destructive'
+                    <span className={`px-2 py-1 rounded text-xs font-medium border ${
+                      dailyProblem.difficulty === 'easy' ? 'bg-success/20 text-success border-success/30' :
+                      dailyProblem.difficulty === 'medium' ? 'bg-accent/20 text-accent border-accent/30' :
+                      'bg-destructive/20 text-destructive border-destructive/30'
                     }`}>
                       {dailyProblem.difficulty}
                     </span>
@@ -179,7 +179,7 @@ const Dashboard = () => {
                     </span>
                   </div>
                   <Button 
-                    className="w-full bg-gradient-hero"
+                    className="w-full bg-gradient-neon hover:shadow-glow-pink"
                     onClick={() => navigate(`/problems/${dailyProblem.id}`)}
                   >
                     Solve Now
@@ -188,7 +188,7 @@ const Dashboard = () => {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">No daily problem available yet</p>
-                  <Button variant="outline" onClick={() => navigate("/problems")}>
+                  <Button variant="outline" onClick={() => navigate("/problems")} className="border-primary/30 hover:bg-primary/10">
                     Browse All Problems
                   </Button>
                 </div>
@@ -197,10 +197,10 @@ const Dashboard = () => {
           </Card>
 
           {/* Recent Badges */}
-          <Card>
+          <Card className="border-accent/30 neon-border bg-gradient-card animate-slide-up" style={{animationDelay: '0.6s'}}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-accent" />
+              <CardTitle className="flex items-center gap-2 neon-text">
+                <Trophy className="h-5 w-5 text-accent animate-float" />
                 Recent Badges
               </CardTitle>
             </CardHeader>
@@ -208,7 +208,7 @@ const Dashboard = () => {
               {badges.length > 0 ? (
                 <div className="space-y-3">
                   {badges.map((userBadge) => (
-                    <div key={userBadge.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div key={userBadge.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50 hover:border-accent/30 transition-colors">
                       <span className="text-3xl">{userBadge.badges.icon}</span>
                       <div className="flex-1">
                         <p className="font-medium">{userBadge.badges.name}</p>
@@ -216,7 +216,7 @@ const Dashboard = () => {
                       </div>
                     </div>
                   ))}
-                  <Button variant="outline" className="w-full" onClick={() => navigate("/profile")}>
+                  <Button variant="outline" className="w-full border-accent/30 hover:bg-accent/10" onClick={() => navigate("/profile")}>
                     View All Badges
                   </Button>
                 </div>
@@ -224,7 +224,7 @@ const Dashboard = () => {
                 <div className="text-center py-8">
                   <Trophy className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                   <p className="text-muted-foreground mb-4">No badges earned yet</p>
-                  <Button variant="outline" onClick={() => navigate("/problems")}>
+                  <Button variant="outline" onClick={() => navigate("/problems")} className="border-primary/30 hover:bg-primary/10">
                     Start Solving
                   </Button>
                 </div>
@@ -234,10 +234,10 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid md:grid-cols-3 gap-4">
+        <div className="mt-8 grid md:grid-cols-3 gap-4 animate-slide-up" style={{animationDelay: '0.7s'}}>
           <Button 
             variant="outline" 
-            className="h-24 text-lg"
+            className="h-24 text-lg border-primary/30 hover:bg-primary/10 hover:shadow-glow-pink transition-all"
             onClick={() => navigate("/problems")}
           >
             <Target className="mr-2 h-5 w-5" />
@@ -245,7 +245,7 @@ const Dashboard = () => {
           </Button>
           <Button 
             variant="outline" 
-            className="h-24 text-lg"
+            className="h-24 text-lg border-secondary/30 hover:bg-secondary/10 hover:shadow-glow-cyan transition-all"
             onClick={() => navigate("/leaderboard")}
           >
             <Trophy className="mr-2 h-5 w-5" />
@@ -253,7 +253,7 @@ const Dashboard = () => {
           </Button>
           <Button 
             variant="outline" 
-            className="h-24 text-lg"
+            className="h-24 text-lg border-accent/30 hover:bg-accent/10 hover:shadow-glow-purple transition-all"
             onClick={() => navigate("/profile")}
           >
             <TrendingUp className="mr-2 h-5 w-5" />

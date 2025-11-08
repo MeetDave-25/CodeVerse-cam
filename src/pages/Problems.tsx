@@ -58,8 +58,8 @@ const Problems = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Problems</h1>
+        <div className="mb-8 animate-slide-up">
+          <h1 className="text-4xl font-bold mb-2 neon-text">Problems</h1>
           <p className="text-muted-foreground">
             Choose your year and semester to see problems
           </p>
@@ -136,9 +136,9 @@ const ProblemsList = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-slide-up">
       {Object.entries(groupedProblems).map(([subject, subjectProblems]) => (
-        <Card key={subject}>
+        <Card key={subject} className="bg-gradient-card border-border/50 neon-border hover:shadow-glow-cyan transition-all">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-primary" />
@@ -148,11 +148,11 @@ const ProblemsList = ({
           <CardContent>
             <div className="space-y-3">
               {subjectProblems.map((problem) => (
-                <div
-                  key={problem.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:border-primary/30 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/problems/${problem.id}`)}
-                >
+                  <div
+                    key={problem.id}
+                    className="flex items-center justify-between p-4 rounded-lg border border-border/50 hover:border-primary/30 hover:shadow-glow-pink transition-all cursor-pointer neon-border"
+                    onClick={() => navigate(`/problems/${problem.id}`)}
+                  >
                   <div className="flex-1">
                     <h4 className="font-medium mb-1">{problem.title}</h4>
                     <p className="text-sm text-muted-foreground line-clamp-1">

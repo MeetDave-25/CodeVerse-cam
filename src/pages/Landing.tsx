@@ -1,122 +1,160 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Code2, Trophy, TrendingUp, Zap, Award, Target } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Code2, Trophy, Zap, Target, Users, Brain } from "lucide-react";
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
+      {/* Animated Background Grid */}
+      <div className="fixed inset-0 cyber-grid opacity-20 pointer-events-none" />
+      
       {/* Header */}
-      <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50 bg-background/95">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Code2 className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              CodeVerse
-            </span>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="ghost" asChild>
-              <Link to="/auth">Sign In</Link>
-            </Button>
-            <Button asChild className="bg-gradient-hero shadow-glow">
-              <Link to="/auth">Get Started</Link>
-            </Button>
+      <header className="relative border-b border-border/40 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Code2 className="h-8 w-8 text-primary animate-neon-pulse" />
+              <span className="text-2xl font-bold bg-gradient-neon bg-clip-text text-transparent">
+                CodeVerse
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <Link to="/auth">
+                <Button variant="outline" className="border-primary/30 hover:bg-primary/10">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button className="bg-gradient-neon hover:shadow-glow-pink">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="inline-block">
-            <span className="px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium border border-primary/20">
-              🎓 Built for College Students
-            </span>
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-            Level Up Your
-            <span className="bg-gradient-hero bg-clip-text text-transparent"> Coding Skills</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Practice problems organized by year and semester. Earn badges, climb leaderboards, 
-            and get AI-powered insights to strengthen your weak areas.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <Button size="lg" asChild className="bg-gradient-hero shadow-glow text-lg px-8">
-              <Link to="/auth">Start Practicing</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild className="text-lg px-8">
-              <Link to="/problems">Browse Problems</Link>
-            </Button>
+      <section className="relative py-20 overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-4xl mx-auto animate-slide-up">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 neon-text">
+              Level Up Your
+              <span className="block bg-gradient-neon bg-clip-text text-transparent animate-float">
+                Coding Skills
+              </span>
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              Master algorithms, compete with peers, and build your programming expertise
+              in a gamified cyberpunk universe
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Link to="/auth">
+                <Button size="lg" className="bg-gradient-neon hover:shadow-glow-pink text-lg px-8">
+                  <Zap className="mr-2 h-5 w-5" />
+                  Start Coding
+                </Button>
+              </Link>
+              <Link to="/leaderboard">
+                <Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/10 text-lg px-8">
+                  <Trophy className="mr-2 h-5 w-5" />
+                  View Leaderboard
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">Why CodeVerse?</h2>
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: Target,
-              title: "Structured Learning",
-              description: "Problems organized by year, semester, and subject to match your curriculum"
-            },
-            {
-              icon: Trophy,
-              title: "Gamification",
-              description: "Earn badges, maintain streaks, and compete on leaderboards"
-            },
-            {
-              icon: TrendingUp,
-              title: "Track Progress",
-              description: "Detailed analytics show your strengths and areas for improvement"
-            },
-            {
-              icon: Zap,
-              title: "Daily Challenges",
-              description: "New problems every day to keep your skills sharp"
-            },
-            {
-              icon: Award,
-              title: "Achievement System",
-              description: "Unlock badges and rewards as you solve more problems"
-            },
-            {
-              icon: Code2,
-              title: "Real-time Feedback",
-              description: "Instant code execution and feedback on your submissions"
-            }
-          ].map((feature, idx) => (
-            <div 
-              key={idx}
-              className="p-6 rounded-xl bg-gradient-card border border-border/50 hover:border-primary/30 transition-all hover:shadow-md group"
-            >
-              <feature.icon className="h-12 w-12 text-primary mb-4 group-hover:scale-110 transition-transform" />
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12 neon-text">
+            Why CodeVerse?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Target,
+                title: "Structured Learning",
+                description: "Problems organized by year, semester, and subject for systematic skill development",
+                color: "text-primary"
+              },
+              {
+                icon: Trophy,
+                title: "Gamification",
+                description: "Earn badges, maintain streaks, and climb the leaderboard as you solve problems",
+                color: "text-secondary"
+              },
+              {
+                icon: Brain,
+                title: "AI Recommendations",
+                description: "Get personalized suggestions and insights on areas to improve",
+                color: "text-accent"
+              },
+              {
+                icon: Code2,
+                title: "Real Problems",
+                description: "Industry-relevant coding challenges to prepare you for the market",
+                color: "text-success"
+              },
+              {
+                icon: Users,
+                title: "Community",
+                description: "Compete with classmates and learn from the best performers",
+                color: "text-neon-cyan"
+              },
+              {
+                icon: Zap,
+                title: "Daily Challenges",
+                description: "Fresh problems every day to keep your skills sharp",
+                color: "text-neon-purple"
+              }
+            ].map((feature, i) => (
+              <Card 
+                key={i} 
+                className="bg-gradient-card border-border/50 hover:border-primary/50 transition-all hover:shadow-glow-pink animate-slide-up"
+                style={{animationDelay: `${i * 0.1}s`}}
+              >
+                <CardHeader>
+                  <feature.icon className={`h-10 w-10 ${feature.color} mb-2 animate-float`} style={{animationDelay: `${i * 0.5}s`}} />
+                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="bg-gradient-hero rounded-2xl p-12 text-center text-white shadow-glow">
-          <h2 className="text-4xl font-bold mb-4">Ready to Begin?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join thousands of students mastering their coding skills
-          </p>
-          <Button size="lg" variant="secondary" asChild className="text-lg px-8">
-            <Link to="/auth">Create Free Account</Link>
-          </Button>
+      {/* CTA Section */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-4">
+          <Card className="bg-gradient-card border-primary/30 neon-border max-w-3xl mx-auto animate-slide-up">
+            <CardContent className="p-12 text-center">
+              <h2 className="text-4xl font-bold mb-4 neon-text">
+                Ready to Begin?
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8">
+                Join hundreds of students mastering their coding skills
+              </p>
+              <Link to="/auth">
+                <Button size="lg" className="bg-gradient-neon hover:shadow-glow-cyan text-lg px-12">
+                  Create Account
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-8 mt-20">
+      <footer className="border-t border-border/40 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2024 CodeVerse Campus. Built for students, by students.</p>
+          <p>© 2024 CodeVerse. Built for students, by students.</p>
         </div>
       </footer>
     </div>

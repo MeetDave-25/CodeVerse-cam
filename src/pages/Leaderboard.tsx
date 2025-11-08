@@ -53,9 +53,9 @@ const Leaderboard = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-            <Trophy className="h-10 w-10 text-accent" />
+        <div className="mb-8 animate-slide-up">
+          <h1 className="text-4xl font-bold mb-2 flex items-center gap-3 neon-text">
+            <Trophy className="h-10 w-10 text-accent animate-float" />
             Leaderboard
           </h1>
           <p className="text-muted-foreground">
@@ -63,7 +63,7 @@ const Leaderboard = () => {
           </p>
         </div>
 
-        <Card>
+        <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.1s'}}>
           <CardHeader>
             <CardTitle>Global Rankings</CardTitle>
           </CardHeader>
@@ -87,11 +87,11 @@ const Leaderboard = () => {
                   return (
                     <div
                       key={user.id}
-                      className={`flex items-center gap-4 p-4 rounded-lg ${
-                        isTopThree 
-                          ? 'bg-gradient-card border border-primary/20 shadow-md' 
-                          : 'bg-muted/30 hover:bg-muted/50'
-                      } transition-colors`}
+                  className={`flex items-center gap-4 p-4 rounded-lg border transition-all cursor-pointer ${
+                    isTopThree 
+                      ? 'bg-gradient-card border-primary/30 shadow-glow-pink neon-border' 
+                      : 'bg-muted/30 hover:bg-muted/50 border-border/50 hover:border-primary/20'
+                  }`}
                     >
                       <div className="w-12 flex items-center justify-center">
                         {getRankIcon(rank)}

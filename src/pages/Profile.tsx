@@ -106,14 +106,14 @@ const Profile = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Profile</h1>
+        <div className="mb-8 animate-slide-up">
+          <h1 className="text-4xl font-bold mb-2 neon-text">Profile</h1>
           <p className="text-muted-foreground">Manage your account and view your achievements</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Profile Info */}
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.1s'}}>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
             </CardHeader>
@@ -153,7 +153,7 @@ const Profile = () => {
                   </Select>
                 </div>
 
-                <Button type="submit" className="w-full bg-gradient-hero" disabled={isSaving}>
+                <Button type="submit" className="w-full bg-gradient-neon hover:shadow-glow-pink" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </form>
@@ -161,8 +161,8 @@ const Profile = () => {
           </Card>
 
           {/* Stats */}
-          <div className="space-y-6">
-            <Card className="bg-gradient-card border-primary/20">
+          <div className="space-y-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
+            <Card className="bg-gradient-card border-primary/20 neon-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
@@ -192,7 +192,7 @@ const Profile = () => {
         </div>
 
         {/* Badges */}
-        <Card className="mt-6">
+        <Card className="mt-6 bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.3s'}}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-accent" />
@@ -205,7 +205,7 @@ const Profile = () => {
                 {badges.map((userBadge) => (
                   <div 
                     key={userBadge.id}
-                    className="p-4 rounded-lg bg-gradient-card border border-border hover:border-primary/30 transition-colors"
+                    className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 hover:shadow-glow-pink transition-all"
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-4xl">{userBadge.badges.icon}</span>
