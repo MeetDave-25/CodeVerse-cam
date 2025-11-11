@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Code2 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -19,6 +20,8 @@ const authSchema = z.object({
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [signInRole, setSignInRole] = useState<"student" | "admin">("student");
+  const [signUpRole, setSignUpRole] = useState<"student" | "admin">("student");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -56,6 +59,7 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
+            role: signUpRole,
           },
         },
       });
@@ -85,12 +89,27 @@ const Auth = () => {
     try {
       authSchema.parse({ email, password });
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      // Verify user has the selected role
+      if (data.user) {
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .eq("role", signInRole)
+          .maybeSingle();
+
+        if (roleError || !roleData) {
+          await supabase.auth.signOut();
+          throw new Error(`You don't have ${signInRole} access. Please select the correct role.`);
+        }
+      }
 
       toast.success("Welcome back!");
     } catch (error: any) {
@@ -131,6 +150,19 @@ const Auth = () => {
 
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-3">
+                    <Label>I am a</Label>
+                    <RadioGroup value={signInRole} onValueChange={(value) => setSignInRole(value as "student" | "admin")} className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="student" id="signin-student" />
+                        <Label htmlFor="signin-student" className="cursor-pointer font-normal">Student</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="admin" id="signin-admin" />
+                        <Label htmlFor="signin-admin" className="cursor-pointer font-normal">Admin</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-email">Email</Label>
                     <Input
@@ -158,6 +190,19 @@ const Auth = () => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-3">
+                    <Label>I am a</Label>
+                    <RadioGroup value={signUpRole} onValueChange={(value) => setSignUpRole(value as "student" | "admin")} className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="student" id="signup-student" />
+                        <Label htmlFor="signup-student" className="cursor-pointer font-normal">Student</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="admin" id="signup-admin" />
+                        <Label htmlFor="signup-admin" className="cursor-pointer font-normal">Admin</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Full Name</Label>
                     <Input
