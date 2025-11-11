@@ -1,9 +1,32 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code2, Trophy, Zap, Target, Users, Brain } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
+  const navigate = useNavigate();
+
+  const handleStartCoding = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.user) {
+      // Check user role and redirect accordingly
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (roleData?.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
+    } else {
+      navigate("/auth");
+    }
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* Animated Background Grid */}
@@ -50,12 +73,14 @@ const Landing = () => {
               in a gamified cyberpunk universe
             </p>
             <div className="flex gap-4 justify-center">
-              <Link to="/auth">
-                <Button size="lg" className="bg-gradient-neon hover:shadow-glow-pink text-lg px-8">
-                  <Zap className="mr-2 h-5 w-5" />
-                  Start Coding
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="bg-gradient-neon hover:shadow-glow-pink text-lg px-8"
+                onClick={handleStartCoding}
+              >
+                <Zap className="mr-2 h-5 w-5" />
+                Start Coding
+              </Button>
               <Link to="/leaderboard">
                 <Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/10 text-lg px-8">
                   <Trophy className="mr-2 h-5 w-5" />

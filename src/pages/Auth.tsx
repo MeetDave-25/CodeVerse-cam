@@ -24,16 +24,39 @@ const Auth = () => {
   const [signUpRole, setSignUpRole] = useState<"student" | "admin">("student");
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/dashboard");
-      }
-    });
+    // Check if user is already logged in and redirect based on role
+    const checkSessionAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/dashboard");
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
+      }
+    };
+
+    checkSessionAndRedirect();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
+        }
       }
     });
 
@@ -96,7 +119,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Verify user has the selected role
+      // Verify user has the selected role and redirect accordingly
       if (data.user) {
         const { data: roleData, error: roleError } = await supabase
           .from("user_roles")
@@ -108,6 +131,13 @@ const Auth = () => {
         if (roleError || !roleData) {
           await supabase.auth.signOut();
           throw new Error(`You don't have ${signInRole} access. Please select the correct role.`);
+        }
+
+        // Redirect based on role
+        if (signInRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/dashboard");
         }
       }
 

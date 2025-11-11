@@ -15,16 +15,8 @@ const Problems = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
     fetchProblems();
   }, [selectedYear, selectedSemester]);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/auth");
-    }
-  };
 
   const fetchProblems = async () => {
     setIsLoading(true);
