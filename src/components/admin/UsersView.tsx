@@ -1,11 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users as UsersIcon, Mail, Trophy, Target, Flame } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export function UsersView() {
+  const queryClient = useQueryClient();
+  
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
@@ -18,6 +22,39 @@ export function UsersView() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const changeUserRole = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: "admin" | "student" }) => {
+      // First, get the current role entry
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      if (existingRole) {
+        // Update existing role
+        const { error } = await supabase
+          .from("user_roles")
+          .update({ role: newRole })
+          .eq("user_id", userId);
+        if (error) throw error;
+      } else {
+        // Insert new role if it doesn't exist
+        const { error } = await supabase
+          .from("user_roles")
+          .insert([{ user_id: userId, role: newRole }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("User role updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update user role");
     },
   });
 
@@ -120,21 +157,23 @@ export function UsersView() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            (() => {
-                              const role = user.user_roles as any;
-                              return Array.isArray(role) && role.length > 0 && role[0].role === "admin" 
-                                ? "default" 
-                                : "secondary";
-                            })()
-                          }
-                        >
-                          {(() => {
+                        <Select
+                          value={(() => {
                             const role = user.user_roles as any;
                             return Array.isArray(role) && role.length > 0 ? role[0].role : "student";
                           })()}
-                        </Badge>
+                          onValueChange={(newRole: "admin" | "student") => 
+                            changeUserRole.mutate({ userId: user.id, newRole })
+                          }
+                        >
+                          <SelectTrigger className="w-28">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="student">Student</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-primary font-medium">
                         {user.total_score}

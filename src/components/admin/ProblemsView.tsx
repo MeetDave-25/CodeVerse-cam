@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { Plus, Trash2, Edit, Download, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProblemDialog } from "./ProblemDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export function ProblemsView() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProblem, setEditingProblem] = useState<any>(null);
+  const [selectedProblems, setSelectedProblems] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: problems, isLoading } = useQuery({
     queryKey: ["admin-problems"],
@@ -76,8 +79,109 @@ export function ProblemsView() {
     setIsDialogOpen(true);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked && problems) {
+      setSelectedProblems(problems.map((p) => p.id));
+    } else {
+      setSelectedProblems([]);
+    }
+  };
+
+  const handleSelectProblem = (problemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProblems([...selectedProblems, problemId]);
+    } else {
+      setSelectedProblems(selectedProblems.filter((id) => id !== problemId));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedProblems.length === 0) {
+      toast.error("No problems selected");
+      return;
+    }
+
+    if (!confirm(`Delete ${selectedProblems.length} problem(s)?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from("problems")
+        .delete()
+        .in("id", selectedProblems);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["admin-problems"] });
+      setSelectedProblems([]);
+      toast.success(`${selectedProblems.length} problem(s) deleted successfully`);
+    } catch (error) {
+      toast.error("Failed to delete problems");
+    }
+  };
+
+  const handleExport = () => {
+    if (!problems || problems.length === 0) {
+      toast.error("No problems to export");
+      return;
+    }
+
+    const dataStr = JSON.stringify(problems, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `problems-${new Date().toISOString().split("T")[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Problems exported successfully");
+  };
+
+  const handleImport = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importedProblems = JSON.parse(text);
+
+      if (!Array.isArray(importedProblems)) {
+        toast.error("Invalid file format");
+        return;
+      }
+
+      // Remove id fields to let Supabase generate new ones
+      const problemsToInsert = importedProblems.map(({ id, created_at, updated_at, ...problem }) => problem);
+
+      const { error } = await supabase.from("problems").insert(problemsToInsert);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["admin-problems"] });
+      toast.success(`${problemsToInsert.length} problem(s) imported successfully`);
+    } catch (error) {
+      toast.error("Failed to import problems");
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      
       <Card className="neon-border bg-gradient-card">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -85,10 +189,26 @@ export function ProblemsView() {
               <CardTitle>Problems Management</CardTitle>
               <CardDescription>Create, edit, and manage coding problems</CardDescription>
             </div>
-            <Button className="bg-gradient-hero" onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Problem
-            </Button>
+            <div className="flex gap-2">
+              {selectedProblems.length > 0 && (
+                <Button variant="destructive" onClick={handleBulkDelete}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete ({selectedProblems.length})
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button variant="outline" onClick={handleImport}>
+                <Upload className="h-4 w-4 mr-2" />
+                Import
+              </Button>
+              <Button className="bg-gradient-hero" onClick={handleCreate}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Problem
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -101,6 +221,12 @@ export function ProblemsView() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedProblems.length === problems.length}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Subject</TableHead>
                     <TableHead>Year/Sem</TableHead>
@@ -112,6 +238,14 @@ export function ProblemsView() {
                 <TableBody>
                   {problems.map((problem) => (
                     <TableRow key={problem.id} className="hover:bg-muted/30">
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedProblems.includes(problem.id)}
+                          onCheckedChange={(checked) =>
+                            handleSelectProblem(problem.id, checked as boolean)
+                          }
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{problem.title}</TableCell>
                       <TableCell>{problem.subject}</TableCell>
                       <TableCell className="text-muted-foreground">
