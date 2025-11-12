@@ -44,6 +44,11 @@ const ProblemDetail = () => {
   };
 
   const handleSubmit = async () => {
+    if (!code.trim()) {
+      toast.error("Please write some code before submitting");
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -51,12 +56,15 @@ const ProblemDetail = () => {
       
       if (!user) {
         toast.error("Please log in to submit");
+        setIsSubmitting(false);
         return;
       }
 
+      console.log("Starting submission for user:", user.id, "problem:", id);
+
       // Simple test evaluation (in production, use a proper code execution service)
-      const passed = Math.random() > 0.3; // 70% pass rate for demo
-      const testResults = problem.test_cases.map((tc: any, i: number) => ({
+      const testCases = problem.test_cases || [];
+      const testResults = testCases.map((tc: any, i: number) => ({
         ...tc,
         passed: Math.random() > 0.2
       }));
@@ -64,8 +72,10 @@ const ProblemDetail = () => {
       const status = testResults.every((r: any) => r.passed) ? "accepted" : "failed";
       const score = status === "accepted" ? problem.points : 0;
 
+      console.log("Test results:", { status, score, testResults });
+
       // Insert submission
-      const { error } = await supabase
+      const { data: submissionData, error: submissionError } = await supabase
         .from("submissions")
         .insert({
           user_id: user.id,
@@ -74,26 +84,43 @@ const ProblemDetail = () => {
           status,
           score,
           test_results: testResults
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (submissionError) {
+        console.error("Submission error:", submissionError);
+        throw submissionError;
+      }
+
+      console.log("Submission created:", submissionData);
 
       // Update user profile if accepted
       if (status === "accepted") {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
           .single();
 
+        if (profileError) {
+          console.error("Profile fetch error:", profileError);
+        }
+
         if (profile) {
-          await supabase
+          const { error: updateError } = await supabase
             .from("profiles")
             .update({
               total_score: (profile.total_score || 0) + score,
               problems_solved: (profile.problems_solved || 0) + 1
             })
             .eq("id", user.id);
+
+          if (updateError) {
+            console.error("Profile update error:", updateError);
+          } else {
+            console.log("Profile updated successfully");
+          }
         }
 
         toast.success(`🎉 Accepted! +${score} points`, {
@@ -104,9 +131,9 @@ const ProblemDetail = () => {
       }
 
       setTestResults(testResults);
-    } catch (error) {
-      console.error(error);
-      toast.error("Submission failed");
+    } catch (error: any) {
+      console.error("Submission failed:", error);
+      toast.error(error.message || "Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

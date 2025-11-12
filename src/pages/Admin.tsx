@@ -6,6 +6,8 @@ import { ProblemsView } from "@/components/admin/ProblemsView";
 import { UsersView } from "@/components/admin/UsersView";
 import { AnalyticsView } from "@/components/admin/AnalyticsView";
 import { SettingsView } from "@/components/admin/SettingsView";
+import { SubmissionsView } from "@/components/admin/SubmissionsView";
+import { DailyProblemScheduler } from "@/components/admin/DailyProblemScheduler";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState("problems");
@@ -16,6 +18,10 @@ const Admin = () => {
         return <ProblemsView />;
       case "users":
         return <UsersView />;
+      case "submissions":
+        return <SubmissionsView />;
+      case "scheduler":
+        return <DailyProblemScheduler />;
       case "analytics":
         return <AnalyticsView />;
       case "settings":
@@ -31,6 +37,10 @@ const Admin = () => {
         return "Problems Management";
       case "users":
         return "Users Management";
+      case "submissions":
+        return "Submission History";
+      case "scheduler":
+        return "Daily Problem Scheduler";
       case "analytics":
         return "Analytics Dashboard";
       case "settings":
@@ -65,6 +75,8 @@ const Admin = () => {
                 <p className="text-muted-foreground">
                   {activeSection === "problems" && "Create, edit, and manage coding problems"}
                   {activeSection === "users" && "View and manage registered users"}
+                  {activeSection === "submissions" && "View all code submissions with advanced filtering"}
+                  {activeSection === "scheduler" && "Set and rotate daily coding challenges"}
                   {activeSection === "analytics" && "Monitor platform performance and metrics"}
                   {activeSection === "settings" && "Configure platform preferences"}
                 </p>

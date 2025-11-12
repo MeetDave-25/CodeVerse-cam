@@ -1,4 +1,4 @@
-import { FileCode, Users, BarChart3, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { FileCode, Users, BarChart3, Settings as SettingsIcon, LogOut, Calendar as CalendarIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 const menuItems = [
   { title: "Problems", icon: FileCode, section: "problems" },
   { title: "Users", icon: Users, section: "users" },
+  { title: "Submissions", icon: FileCode, section: "submissions" },
+  { title: "Daily Scheduler", icon: CalendarIcon, section: "scheduler" },
   { title: "Analytics", icon: BarChart3, section: "analytics" },
   { title: "Settings", icon: SettingsIcon, section: "settings" },
 ];
