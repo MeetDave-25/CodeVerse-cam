@@ -179,7 +179,7 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2024 CodeVerse. Built for students, by students.</p>
+          <p>© 2024 CodeVerse. Made by Meet G. Dave with Help/Guidance of Parth D. Joshi</p>
         </div>
       </footer>
     </div>

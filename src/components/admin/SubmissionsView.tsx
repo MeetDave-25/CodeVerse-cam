@@ -12,6 +12,7 @@ import { FileCode, Filter, Search, Calendar as CalendarIcon } from "lucide-react
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CodeHighlighter } from "@/components/ui/code-highlighter";
 
 export function SubmissionsView() {
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -300,9 +301,11 @@ export function SubmissionsView() {
                               </div>
                               <div>
                                 <h4 className="font-semibold mb-2">Code</h4>
-                                <pre className="p-4 bg-muted/50 border border-border/50 rounded-lg overflow-x-auto text-sm font-mono">
-                                  {submission.code}
-                                </pre>
+                                <CodeHighlighter 
+                                  code={submission.code} 
+                                  language={submission.language || "javascript"}
+                                  showLineNumbers={true}
+                                />
                               </div>
                               {submission.test_results && (
                                 <div>

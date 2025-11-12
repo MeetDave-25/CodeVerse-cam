@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# CodeVerse Campus - Level Up Your Coding Skills
 
-## Project info
+A gamified coding practice platform designed for college students to practice programming problems organized by year and semester.
 
-**URL**: https://lovable.dev/projects/fcd66d05-379a-45ea-8b5e-7a4fb17717c9
+## Features
 
-## How can I edit this code?
+- 🎯 **Organized Problem Sets** - Problems categorized by academic year and semester
+- 🏆 **Gamification** - Earn badges, climb leaderboards, and track your progress
+- 📊 **Analytics Dashboard** - Detailed performance insights for both students and admins
+- 💻 **Syntax Highlighting** - Professional code display with multi-language support
+- 🔥 **Streak Tracking** - Maintain your coding momentum
+- 👥 **Admin Panel** - Comprehensive management tools for educators
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fcd66d05-379a-45ea-8b5e-7a4fb17717c9) and start prompting.
+- Node.js (v18 or higher)
+- npm or yarn package manager
 
-Changes made via Lovable will be committed automatically to this repo.
+### Installation
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
+1. Clone the repository:
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
+cd codeverse-campus
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install dependencies:
+```sh
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Set up environment variables:
+```sh
+cp .env.example .env
+# Edit .env with your Supabase credentials
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Start the development server:
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Tech Stack
 
-**Use GitHub Codespaces**
+This project is built with modern web technologies:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Frontend**: React 18 with TypeScript
+- **Build Tool**: Vite
+- **UI Framework**: shadcn/ui components
+- **Styling**: Tailwind CSS
+- **Backend**: Supabase (Database, Auth, Real-time)
+- **Charts**: Recharts
+- **Code Highlighting**: Prism.js
+- **Icons**: Lucide React
 
-## What technologies are used for this project?
+## Project Structure
 
-This project is built with:
+```
+src/
+├── components/          # Reusable UI components
+│   ├── admin/          # Admin panel components
+│   ├── student/        # Student-specific components
+│   └── ui/             # Base UI components
+├── pages/              # Main application pages
+├── hooks/              # Custom React hooks
+├── integrations/       # External service integrations
+└── lib/                # Utility functions
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Available Scripts
 
-## How can I deploy this project?
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-Simply open [Lovable](https://lovable.dev/projects/fcd66d05-379a-45ea-8b5e-7a4fb17717c9) and click on Share -> Publish.
+## Contributing
 
-## Can I connect a custom domain to my Lovable project?
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Made By 
+-----------------------------------------------------------------------
+
+Made By Meet G. Dave with Guild/Help of Parth D. Joshi
+
+----------------------------------------------------------------------- 

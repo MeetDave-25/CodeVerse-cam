@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Code2, Trophy, Flame, Target, TrendingUp } from "lucide-react";
+import { Code2, Trophy, Flame, Target, TrendingUp, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
+import { StudentAnalysis } from "@/components/student/StudentAnalysis";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -88,6 +90,20 @@ const Dashboard = () => {
           </h1>
           <p className="text-muted-foreground">Here's your coding progress</p>
         </div>
+
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="overview" className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Analysis
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -252,6 +268,12 @@ const Dashboard = () => {
             My Progress
           </Button>
         </div>
+          </TabsContent>
+
+          <TabsContent value="analysis">
+            <StudentAnalysis />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
