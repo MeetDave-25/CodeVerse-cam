@@ -1,0 +1,34 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background -->
+  <rect width="1024" height="1024" fill="#000000"/>
+  
+  <!-- Neon glow effect -->
+  <defs>
+    <filter id="neon-pink" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="neon-blue" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- "codeverse" text in pink/magenta neon -->
+  <text x="512" y="440" font-family="Arial, sans-serif" font-size="140" font-weight="bold" 
+        fill="#ff00ff" text-anchor="middle" filter="url(#neon-pink)" 
+        style="text-transform: lowercase; letter-spacing: -2px;">codeverse</text>
+  
+  <!-- "campus" text in cyan/blue neon -->
+  <text x="512" y="600" font-family="Arial, sans-serif" font-size="140" font-weight="bold" 
+        fill="#00d4ff" text-anchor="middle" filter="url(#neon-blue)" 
+        style="text-transform: lowercase; letter-spacing: -2px;">campus</text>
+</svg>
