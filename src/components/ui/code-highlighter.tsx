@@ -29,11 +29,11 @@ interface CodeHighlighterProps {
   showLineNumbers?: boolean;
 }
 
-export function CodeHighlighter({ 
-  code, 
-  language = "javascript", 
+export function CodeHighlighter({
+  code,
+  language = "javascript",
   className = "",
-  showLineNumbers = true 
+  showLineNumbers = true
 }: CodeHighlighterProps) {
   const codeRef = useRef<HTMLElement>(null);
 
@@ -69,25 +69,23 @@ export function CodeHighlighter({
           {language.toUpperCase()}
         </span>
       </div>
-      <pre 
+      <pre
         className={`
           ${showLineNumbers ? 'line-numbers' : ''} 
           !bg-muted/50 !border !border-border/50 !rounded-lg !p-4 !overflow-x-auto !text-sm
           scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent
         `}
-        style={{ 
-          background: 'hsl(var(--muted) / 0.5)', 
-          border: '1px solid hsl(var(--border) / 0.5)',
+        style={{
           borderRadius: '0.5rem',
           padding: '1rem',
           fontSize: '0.875rem',
           lineHeight: '1.5'
         }}
       >
-        <code 
-          ref={codeRef} 
+        <code
+          ref={codeRef}
           className={`language-${prismLanguage}`}
-          style={{ 
+          style={{
             background: 'transparent',
             fontSize: 'inherit',
             fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'

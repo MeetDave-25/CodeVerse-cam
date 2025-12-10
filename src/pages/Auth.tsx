@@ -24,10 +24,15 @@ const Auth = () => {
   const [signUpRole, setSignUpRole] = useState<"student" | "admin">("student");
 
   useEffect(() => {
+    let isRedirecting = false;
+
     // Check if user is already logged in and redirect based on role
     const checkSessionAndRedirect = async () => {
+      if (isRedirecting) return;
+
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        isRedirecting = true;
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -35,9 +40,9 @@ const Auth = () => {
           .maybeSingle();
 
         if (roleData?.role === "admin") {
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         } else {
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
         }
       }
     };
@@ -45,7 +50,9 @@ const Auth = () => {
     checkSessionAndRedirect();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
+      // Only redirect on SIGNED_IN event to prevent loops
+      if (event === 'SIGNED_IN' && session?.user && !isRedirecting) {
+        isRedirecting = true;
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -53,9 +60,9 @@ const Auth = () => {
           .maybeSingle();
 
         if (roleData?.role === "admin") {
-          navigate("/admin");
+          navigate("/admin", { replace: true });
         } else {
-          navigate("/dashboard");
+          navigate("/dashboard", { replace: true });
         }
       }
     });
@@ -82,7 +89,7 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
-            role: signUpRole,
+            role: 'student', // All signups are students - admins created manually
           },
         },
       });
@@ -119,29 +126,26 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Verify user has the selected role and redirect accordingly
+      toast.success("Welcome back!");
+
+      // Manually redirect after successful login
       if (data.user) {
-        const { data: roleData, error: roleError } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .eq("role", signInRole)
-          .maybeSingle();
+        // Try to get user role with timeout
+        setTimeout(async () => {
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.user.id)
+            .maybeSingle();
 
-        if (roleError || !roleData) {
-          await supabase.auth.signOut();
-          throw new Error(`You don't have ${signInRole} access. Please select the correct role.`);
-        }
-
-        // Redirect based on role
-        if (signInRole === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/dashboard");
-        }
+          if (roleData?.role === "admin") {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/dashboard", { replace: true });
+          }
+        }, 500);
       }
 
-      toast.success("Welcome back!");
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -220,19 +224,7 @@ const Auth = () => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-3">
-                    <Label>I am a</Label>
-                    <RadioGroup value={signUpRole} onValueChange={(value) => setSignUpRole(value as "student" | "admin")} className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="student" id="signup-student" />
-                        <Label htmlFor="signup-student" className="cursor-pointer font-normal">Student</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="admin" id="signup-admin" />
-                        <Label htmlFor="signup-admin" className="cursor-pointer font-normal">Admin</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
+                  {/* Removed role selection - all signups are students by default */}
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Full Name</Label>
                     <Input

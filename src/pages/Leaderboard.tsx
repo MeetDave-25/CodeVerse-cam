@@ -23,15 +23,58 @@ const Leaderboard = () => {
   };
 
   const fetchLeaderboard = async () => {
-    const { data, error } = await supabase
+    // Fetch profiles
+    const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("*")
       .order("total_score", { ascending: false })
-      .limit(50);
+      .limit(100); // Fetch more initially to filter
 
-    if (!error && data) {
-      setLeaderboard(data);
+    console.log('📊 Fetched profiles:', profiles);
+
+    if (profilesError) {
+      console.error('❌ Error fetching profiles:', profilesError);
+      setIsLoading(false);
+      return;
     }
+
+    // Fetch user roles to filter out admins
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("*");
+
+    console.log('👥 Fetched roles:', roles);
+
+    if (rolesError) {
+      console.error('❌ Error fetching roles:', rolesError);
+      // If roles fetch fails, just show all profiles
+      setLeaderboard(profiles?.slice(0, 50) || []);
+      setIsLoading(false);
+      return;
+    }
+
+    // Identify admin user IDs
+    const adminUserIds = new Set(
+      roles?.filter(r => r.role === 'admin').map(r => r.user_id)
+    );
+
+    console.log('🚫 Admin User IDs:', [...adminUserIds]);
+
+    // Filter out admin users - only show students who are NOT admins
+    const studentProfiles = profiles?.filter(profile => {
+      // If user is an admin, EXCLUDE them immediately
+      if (adminUserIds.has(profile.id)) {
+        return false;
+      }
+
+      // Must have a student role
+      const hasStudentRole = roles?.some(r => r.user_id === profile.id && r.role === 'student');
+      return hasStudentRole;
+    }).slice(0, 50); // Take top 50 students
+
+    console.log('🎓 Student profiles for leaderboard:', studentProfiles);
+
+    setLeaderboard(studentProfiles || []);
     setIsLoading(false);
   };
 
@@ -51,7 +94,7 @@ const Leaderboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 animate-slide-up">
           <h1 className="text-4xl font-bold mb-2 flex items-center gap-3 neon-text">
@@ -63,7 +106,7 @@ const Leaderboard = () => {
           </p>
         </div>
 
-        <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.1s'}}>
+        <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <CardHeader>
             <CardTitle>Global Rankings</CardTitle>
           </CardHeader>
@@ -83,20 +126,19 @@ const Leaderboard = () => {
                 {leaderboard.map((user, index) => {
                   const rank = index + 1;
                   const isTopThree = rank <= 3;
-                  
+
                   return (
                     <div
-                      key={user.id}
-                  className={`flex items-center gap-4 p-4 rounded-lg border transition-all cursor-pointer ${
-                    isTopThree 
-                      ? 'bg-gradient-card border-primary/30 shadow-glow-pink neon-border' 
-                      : 'bg-muted/30 hover:bg-muted/50 border-border/50 hover:border-primary/20'
-                  }`}
+                      key={`${user.id}-${user.email}-${index}`}
+                      className={`flex items-center gap-4 p-4 rounded-lg border transition-all cursor-pointer ${isTopThree
+                        ? 'bg-gradient-card border-primary/30 shadow-glow-pink neon-border'
+                        : 'bg-muted/30 hover:bg-muted/50 border-border/50 hover:border-primary/20'
+                        }`}
                     >
                       <div className="w-12 flex items-center justify-center">
                         {getRankIcon(rank)}
                       </div>
-                      
+
                       <div className="flex-1">
                         <h3 className={`font-semibold ${isTopThree ? 'text-lg' : ''}`}>
                           {user.full_name || "Anonymous Coder"}

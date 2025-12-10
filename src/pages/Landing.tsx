@@ -9,7 +9,7 @@ const Landing = () => {
 
   const handleStartCoding = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (session?.user) {
       // Check user role and redirect accordingly
       const { data: roleData } = await supabase
@@ -31,7 +31,7 @@ const Landing = () => {
     <div className="min-h-screen bg-background">
       {/* Animated Background Grid */}
       <div className="fixed inset-0 cyber-grid opacity-20 pointer-events-none" />
-      
+
       {/* Header */}
       <header className="relative border-b border-border/40 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
@@ -44,7 +44,7 @@ const Landing = () => {
             </div>
             <div className="flex gap-3">
               <Link to="/auth">
-                <Button variant="outline" className="border-primary/30 hover:bg-primary/10">
+                <Button variant="outline" className="border-primary/30 hover:bg-primary hover:text-primary-foreground">
                   Sign In
                 </Button>
               </Link>
@@ -73,8 +73,8 @@ const Landing = () => {
               in a gamified cyberpunk universe
             </p>
             <div className="flex gap-4 justify-center">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-gradient-neon hover:shadow-glow-pink text-lg px-8"
                 onClick={handleStartCoding}
               >
@@ -82,7 +82,7 @@ const Landing = () => {
                 Start Coding
               </Button>
               <Link to="/leaderboard">
-                <Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary/10 text-lg px-8">
+                <Button size="lg" variant="outline" className="border-primary/30 hover:bg-primary hover:text-primary-foreground text-lg px-8">
                   <Trophy className="mr-2 h-5 w-5" />
                   View Leaderboard
                 </Button>
@@ -137,13 +137,13 @@ const Landing = () => {
                 color: "text-neon-purple"
               }
             ].map((feature, i) => (
-              <Card 
-                key={i} 
+              <Card
+                key={i}
                 className="bg-gradient-card border-border/50 hover:border-primary/50 transition-all hover:shadow-glow-pink animate-slide-up"
-                style={{animationDelay: `${i * 0.1}s`}}
+                style={{ animationDelay: `${i * 0.1}s` }}
               >
                 <CardHeader>
-                  <feature.icon className={`h-10 w-10 ${feature.color} mb-2 animate-float`} style={{animationDelay: `${i * 0.5}s`}} />
+                  <feature.icon className={`h-10 w-10 ${feature.color} mb-2 animate-float`} style={{ animationDelay: `${i * 0.5}s` }} />
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -179,7 +179,8 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2024 CodeVerse. Made by Meet G. Dave with Help/Guidance of Parth D. Joshi</p>
+          <p>Innovative Idea Of Dr. Manish Shah (LJKU)</p>
+          <p>© 2025 CodeVerse. Made by Meet G. Dave Under Guidance of Prof.Parth D. Joshi</p>
         </div>
       </footer>
     </div>

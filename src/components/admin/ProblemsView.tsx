@@ -44,18 +44,34 @@ export function ProblemsView() {
 
   const saveProblem = useMutation({
     mutationFn: async (problemData: any) => {
+      console.log("Saving problem data:", problemData);
+
       if (problemData.id) {
         // Update existing problem
         const { id, ...updateData } = problemData;
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("problems")
           .update(updateData)
-          .eq("id", id);
-        if (error) throw error;
+          .eq("id", id)
+          .select();
+
+        if (error) {
+          console.error("Update error:", error);
+          throw error;
+        }
+        return data;
       } else {
         // Create new problem
-        const { error } = await supabase.from("problems").insert([problemData]);
-        if (error) throw error;
+        const { data, error } = await supabase
+          .from("problems")
+          .insert([problemData])
+          .select();
+
+        if (error) {
+          console.error("Insert error:", error);
+          throw error;
+        }
+        return data;
       }
     },
     onSuccess: (_, variables) => {
@@ -64,8 +80,9 @@ export function ProblemsView() {
       setIsDialogOpen(false);
       setEditingProblem(null);
     },
-    onError: () => {
-      toast.error("Failed to save problem");
+    onError: (error: any) => {
+      console.error("Save problem error:", error);
+      toast.error(`Failed to save problem: ${error.message || "Unknown error"}`);
     },
   });
 
@@ -181,7 +198,7 @@ export function ProblemsView() {
         className="hidden"
         onChange={handleFileChange}
       />
-      
+
       <Card className="neon-border bg-gradient-card">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -253,13 +270,12 @@ export function ProblemsView() {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            problem.difficulty === "easy"
+                          className={`px-2 py-1 rounded text-xs font-medium ${problem.difficulty === "easy"
                               ? "bg-success/20 text-success"
                               : problem.difficulty === "medium"
-                              ? "bg-accent/20 text-accent"
-                              : "bg-destructive/20 text-destructive"
-                          }`}
+                                ? "bg-accent/20 text-accent"
+                                : "bg-destructive/20 text-destructive"
+                            }`}
                         >
                           {problem.difficulty}
                         </span>

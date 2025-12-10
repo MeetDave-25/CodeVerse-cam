@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -9,30 +10,77 @@ import { toast } from "sonner";
 
 export function UsersView() {
   const queryClient = useQueryClient();
-  
-  const { data: users, isLoading } = useQuery({
+
+  const { data: users, isLoading, error } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log("Fetching users...");
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          *,
-          user_roles (role)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
+
+      // Fetch roles
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("*");
+
+      if (rolesError) {
+        console.error("Error fetching roles:", rolesError);
+        // Don't fail completely if roles fail, just return profiles
+        return profiles.map(profile => ({
+          ...profile,
+          user_roles: []
+        }));
+      }
+
+      // Merge data
+      return profiles.map(profile => ({
+        ...profile,
+        user_roles: roles.filter(r => r.user_id === profile.id)
+      }));
     },
+  });
+
+  const [yearFilter, setYearFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+
+  const filteredUsers = users?.filter(user => {
+    // Year filter
+    if (yearFilter !== "all") {
+      if (user.college_year?.toString() !== yearFilter) {
+        return false;
+      }
+    }
+
+    // Role filter
+    if (roleFilter !== "all") {
+      const role = user.user_roles as any;
+      const userRole = Array.isArray(role) && role.length > 0 ? role[0].role : 'student';
+      if (userRole !== roleFilter) {
+        return false;
+      }
+    }
+
+    return true;
   });
 
   const changeUserRole = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: "admin" | "student" }) => {
       // First, get the current role entry
-      const { data: existingRole } = await supabase
+      const { data: existingRole, error: fetchError } = await supabase
         .from("user_roles")
         .select("id")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
 
       if (existingRole) {
         // Update existing role
@@ -53,8 +101,9 @@ export function UsersView() {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("User role updated successfully");
     },
-    onError: () => {
-      toast.error("Failed to update user role");
+    onError: (error: any) => {
+      console.error("Role update error:", error);
+      toast.error(`Failed to update user role: ${error.message}`);
     },
   });
 
@@ -121,22 +170,53 @@ export function UsersView() {
 
       {/* Users Table */}
       <Card className="neon-border bg-gradient-card">
-        <CardHeader>
-          <CardTitle>Users Management</CardTitle>
-          <CardDescription>View and manage registered users</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Users Management</CardTitle>
+            <CardDescription>View and manage registered users</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by Role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="student">Students Only</SelectItem>
+                <SelectItem value="admin">Admins Only</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="1">1st Year</SelectItem>
+                <SelectItem value="2">2nd Year</SelectItem>
+                <SelectItem value="3">3rd Year</SelectItem>
+                <SelectItem value="4">4th Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Loading users...</p>
             </div>
-          ) : users && users.length > 0 ? (
+          ) : error ? (
+            <div className="text-center py-8 text-destructive">
+              <p>Error loading users: {(error as Error).message}</p>
+            </div>
+          ) : filteredUsers && filteredUsers.length > 0 ? (
             <div className="rounded-lg border border-border/50 overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Year</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Score</TableHead>
                     <TableHead>Solved</TableHead>
@@ -145,48 +225,58 @@ export function UsersView() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-muted/30">
-                      <TableCell className="font-medium">
-                        {user.full_name || "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-3 w-3 text-muted-foreground" />
-                          {user.email}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={(() => {
-                            const role = user.user_roles as any;
-                            return Array.isArray(role) && role.length > 0 ? role[0].role : "student";
-                          })()}
-                          onValueChange={(newRole: "admin" | "student") => 
-                            changeUserRole.mutate({ userId: user.id, newRole })
-                          }
-                        >
-                          <SelectTrigger className="w-28">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-primary font-medium">
-                        {user.total_score}
-                      </TableCell>
-                      <TableCell>{user.problems_solved}</TableCell>
-                      <TableCell className="text-destructive font-medium">
-                        {user.current_streak} 🔥
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredUsers.map((user) => {
+                    const role = user.user_roles as any;
+                    const userRole = Array.isArray(role) && role.length > 0 ? role[0].role : "student";
+                    const isAdmin = userRole === 'admin';
+
+                    return (
+                      <TableRow key={user.id} className="hover:bg-muted/30">
+                        <TableCell className="font-medium">
+                          {user.full_name || "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
+                            {user.email}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {user.college_year ? `Year ${user.college_year}` : "N/A"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={userRole}
+                            onValueChange={(newRole: "admin" | "student") =>
+                              changeUserRole.mutate({ userId: user.id, newRole })
+                            }
+                          >
+                            <SelectTrigger className="w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="student">Student</SelectItem>
+                              <SelectItem value="admin">Admin</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-primary font-medium">
+                          {isAdmin ? "-" : (user.total_score || 0)}
+                        </TableCell>
+                        <TableCell>
+                          {isAdmin ? "-" : (user.problems_solved || 0)}
+                        </TableCell>
+                        <TableCell className="text-destructive font-medium">
+                          {isAdmin ? "-" : `${user.current_streak || 0} 🔥`}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

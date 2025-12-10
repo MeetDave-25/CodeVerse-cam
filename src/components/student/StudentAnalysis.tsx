@@ -3,24 +3,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
-  TrendingUp, 
-  Target, 
-  Clock, 
-  Award, 
-  BarChart3, 
+import {
+  TrendingUp,
+  Target,
+  Clock,
+  Award,
+  BarChart3,
   Calendar,
   CheckCircle,
   XCircle,
   Flame
 } from "lucide-react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -48,7 +48,7 @@ export function StudentAnalysis({ userId }: StudentAnalysisProps) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const targetUserId = userId || user?.id;
-      
+
       if (!targetUserId) return;
 
       // Fetch user profile
@@ -90,7 +90,7 @@ export function StudentAnalysis({ userId }: StudentAnalysisProps) {
   const totalSubmissions = submissions.length;
   const acceptedSubmissions = submissions.filter(s => s.status === 'accepted');
   const successRate = totalSubmissions > 0 ? Math.round((acceptedSubmissions.length / totalSubmissions) * 100) : 0;
-  
+
   // Difficulty breakdown
   const difficultyStats = acceptedSubmissions.reduce((acc: any, sub) => {
     const difficulty = sub.problems?.difficulty || 'unknown';
@@ -124,17 +124,21 @@ export function StudentAnalysis({ userId }: StudentAnalysisProps) {
   // Performance trends
   const recentSubmissions = submissions.slice(0, 10);
   const strongAreas = Object.entries(difficultyStats)
-    .sort(([,a], [,b]) => (b as number) - (a as number))
+    .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 2)
     .map(([difficulty]) => difficulty);
 
   const weakAreas = Object.entries(difficultyStats)
-    .sort(([,a], [,b]) => (a as number) - (b as number))
+    .sort(([, a], [, b]) => (a as number) - (b as number))
     .slice(0, 2)
     .map(([difficulty]) => difficulty);
 
   // Mock average time calculation (you can implement actual timing later)
-  const avgSolveTime = Math.floor(Math.random() * 25) + 10; // 10-35 minutes
+  // Calculate average solve time from actual submission data
+  const submissionsWithTime = submissions?.filter(s => s.time_taken && s.time_taken > 0) || [];
+  const avgSolveTime = submissionsWithTime.length > 0
+    ? Math.round(submissionsWithTime.reduce((sum, s) => sum + (s.time_taken || 0), 0) / submissionsWithTime.length / 60) // Convert seconds to minutes
+    : 0;
 
   return (
     <div className="space-y-6">

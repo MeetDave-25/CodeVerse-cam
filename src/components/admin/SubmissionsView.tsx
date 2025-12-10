@@ -18,13 +18,12 @@ export function SubmissionsView() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [filteredSubmissions, setFilteredSubmissions] = useState<any[]>([]);
   const [problems, setProblems] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [userFilter, setUserFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
   const [problemFilter, setProblemFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -35,27 +34,25 @@ export function SubmissionsView() {
 
   useEffect(() => {
     applyFilters();
-  }, [submissions, searchQuery, statusFilter, userFilter, problemFilter, dateFrom, dateTo]);
+  }, [submissions, searchQuery, statusFilter, yearFilter, problemFilter, dateFrom, dateTo]);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [{ data: submissionsData }, { data: problemsData }, { data: usersData }] = await Promise.all([
+      const [{ data: submissionsData }, { data: problemsData }] = await Promise.all([
         supabase
           .from("submissions")
           .select(`
             *,
-            profiles:user_id (email, full_name),
+            profiles:user_id (email, full_name, college_year),
             problems:problem_id (title, difficulty)
           `)
           .order("created_at", { ascending: false }),
-        supabase.from("problems").select("id, title"),
-        supabase.from("profiles").select("id, email, full_name")
+        supabase.from("problems").select("id, title")
       ]);
 
       if (submissionsData) setSubmissions(submissionsData);
       if (problemsData) setProblems(problemsData);
-      if (usersData) setUsers(usersData);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load submissions");
@@ -69,7 +66,7 @@ export function SubmissionsView() {
 
     // Search filter
     if (searchQuery) {
-      filtered = filtered.filter(sub => 
+      filtered = filtered.filter(sub =>
         sub.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sub.problems?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sub.code?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -81,9 +78,9 @@ export function SubmissionsView() {
       filtered = filtered.filter(sub => sub.status === statusFilter);
     }
 
-    // User filter
-    if (userFilter !== "all") {
-      filtered = filtered.filter(sub => sub.user_id === userFilter);
+    // Year filter
+    if (yearFilter !== "all") {
+      filtered = filtered.filter(sub => sub.profiles?.college_year?.toString() === yearFilter);
     }
 
     // Problem filter
@@ -107,7 +104,7 @@ export function SubmissionsView() {
   const clearFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
-    setUserFilter("all");
+    setYearFilter("all");
     setProblemFilter("all");
     setDateFrom(undefined);
     setDateTo(undefined);
@@ -154,20 +151,21 @@ export function SubmissionsView() {
                 <SelectItem value="accepted">Accepted</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
               </SelectContent>
+
+
             </Select>
 
-            {/* User Filter */}
-            <Select value={userFilter} onValueChange={setUserFilter}>
+            {/* Year Filter */}
+            <Select value={yearFilter} onValueChange={setYearFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Filter by user" />
+                <SelectValue placeholder="Filter by year" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.full_name || user.email}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="1">1st Year</SelectItem>
+                <SelectItem value="2">2nd Year</SelectItem>
+                <SelectItem value="3">3rd Year</SelectItem>
+                <SelectItem value="4">4th Year</SelectItem>
               </SelectContent>
             </Select>
 
@@ -299,14 +297,20 @@ export function SubmissionsView() {
                                   {submission.problems?.title}
                                 </p>
                               </div>
+
                               <div>
                                 <h4 className="font-semibold mb-2">Code</h4>
-                                <CodeHighlighter 
-                                  code={submission.code} 
-                                  language={submission.language || "javascript"}
-                                  showLineNumbers={true}
-                                />
+                                {submission.code ? (
+                                  <pre className="p-4 bg-muted rounded-md overflow-auto font-mono text-sm whitespace-pre-wrap">
+                                    {submission.code}
+                                  </pre>
+                                ) : (
+                                  <div className="p-4 bg-muted/30 border border-border/50 rounded-lg text-muted-foreground text-sm italic">
+                                    No code available for this submission.
+                                  </div>
+                                )}
                               </div>
+
                               {submission.test_results && (
                                 <div>
                                   <h4 className="font-semibold mb-2">Test Results</h4>
@@ -314,11 +318,10 @@ export function SubmissionsView() {
                                     {submission.test_results.map((result: any, i: number) => (
                                       <div
                                         key={i}
-                                        className={`p-2 rounded border text-sm ${
-                                          result.passed
-                                            ? "bg-success/10 border-success/30 text-success"
-                                            : "bg-destructive/10 border-destructive/30 text-destructive"
-                                        }`}
+                                        className={`p-2 rounded border text-sm ${result.passed
+                                          ? "bg-success/10 border-success/30 text-success"
+                                          : "bg-destructive/10 border-destructive/30 text-destructive"
+                                          }`}
                                       >
                                         Test {i + 1}: {result.passed ? "✓ Passed" : "✗ Failed"}
                                       </div>
@@ -338,6 +341,6 @@ export function SubmissionsView() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }

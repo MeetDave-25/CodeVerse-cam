@@ -104,7 +104,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 animate-slide-up">
           <h1 className="text-4xl font-bold mb-2 neon-text">Profile</h1>
@@ -113,7 +113,7 @@ const Profile = () => {
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Profile Info */}
-          <Card className="md:col-span-2 bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.1s'}}>
+          <Card className="md:col-span-2 bg-gradient-card border-border/50 neon-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
             </CardHeader>
@@ -161,7 +161,7 @@ const Profile = () => {
           </Card>
 
           {/* Stats */}
-          <div className="space-y-6 animate-slide-up" style={{animationDelay: '0.2s'}}>
+          <div className="space-y-6 animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <Card className="bg-gradient-card border-primary/20 neon-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -192,7 +192,7 @@ const Profile = () => {
         </div>
 
         {/* Badges */}
-        <Card className="mt-6 bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.3s'}}>
+        <Card className="mt-6 bg-gradient-card border-border/50 neon-border animate-slide-up" style={{ animationDelay: '0.3s' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-accent" />
@@ -203,7 +203,7 @@ const Profile = () => {
             {badges.length > 0 ? (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {badges.map((userBadge) => (
-                  <div 
+                  <div
                     key={userBadge.id}
                     className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 hover:shadow-glow-pink transition-all"
                   >

@@ -39,9 +39,21 @@ export function AnalyticsView() {
   const { data: users } = useQuery({
     queryKey: ["admin-users-analytics"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*");
-      if (error) throw error;
-      return data;
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase.from("profiles").select("*");
+      if (profilesError) throw profilesError;
+
+      // Fetch user roles to filter out admins
+      const { data: roles, error: rolesError } = await supabase.from("user_roles").select("*");
+      if (rolesError) throw rolesError;
+
+      // Filter out admin users - only show students in analytics
+      const studentProfiles = profiles?.filter(profile => {
+        const userRole = roles?.find(r => r.user_id === profile.id);
+        return userRole?.role === 'student';
+      });
+
+      return studentProfiles;
     },
   });
 
@@ -64,7 +76,7 @@ export function AnalyticsView() {
   const stats = {
     totalSubmissions: submissions?.length || 0,
     successfulSubmissions: submissions?.filter(s => s.status === 'accepted').length || 0,
-    averageScore: users?.length 
+    averageScore: users?.length
       ? Math.round(users.reduce((sum, u) => sum + (u.total_score || 0), 0) / users.length)
       : 0,
     activeProblemSolvers: users?.filter(u => (u.problems_solved || 0) > 0).length || 0,
@@ -95,7 +107,7 @@ export function AnalyticsView() {
     value: count,
   }));
 
-  // Top performing students
+  // Top performing students (already filtered to students only in the query above)
   const topStudents = users
     ?.sort((a, b) => (b.total_score || 0) - (a.total_score || 0))
     .slice(0, 10) || [];
@@ -106,24 +118,27 @@ export function AnalyticsView() {
     const acceptedSubmissions = userSubmissions.filter(s => s.status === 'accepted');
     const totalAttempts = userSubmissions.length;
     const successRate = totalAttempts > 0 ? Math.round((acceptedSubmissions.length / totalAttempts) * 100) : 0;
-    
-    // Calculate average time (mock data for now)
-    const avgTime = Math.floor(Math.random() * 30) + 5; // 5-35 minutes
-    
+
+    // Calculate average time from actual submission data
+    const submissionsWithTime = userSubmissions.filter(s => s.time_taken && s.time_taken > 0);
+    const avgTime = submissionsWithTime.length > 0
+      ? Math.round(submissionsWithTime.reduce((sum, s) => sum + (s.time_taken || 0), 0) / submissionsWithTime.length / 60) // Convert seconds to minutes
+      : 0;
+
     // Analyze strengths and weaknesses
     const difficultyStats = acceptedSubmissions.reduce((acc: any, sub) => {
       const difficulty = sub.problems?.difficulty || 'unknown';
       acc[difficulty] = (acc[difficulty] || 0) + 1;
       return acc;
     }, {});
-    
+
     const strongAreas = Object.entries(difficultyStats)
-      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 2)
       .map(([difficulty]) => difficulty);
-    
+
     const weakAreas = Object.entries(difficultyStats)
-      .sort(([,a], [,b]) => (a as number) - (b as number))
+      .sort(([, a], [, b]) => (a as number) - (b as number))
       .slice(0, 2)
       .map(([difficulty]) => difficulty);
 
@@ -309,9 +324,9 @@ export function AnalyticsView() {
                           <DialogHeader>
                             <DialogTitle>Student Analysis: {student.full_name || student.email}</DialogTitle>
                           </DialogHeader>
-                          <StudentAnalysisModal 
-                            student={student} 
-                            analysis={getStudentAnalysis(student.id)} 
+                          <StudentAnalysisModal
+                            student={student}
+                            analysis={getStudentAnalysis(student.id)}
                           />
                         </DialogContent>
                       </Dialog>

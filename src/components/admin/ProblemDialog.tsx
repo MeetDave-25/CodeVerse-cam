@@ -30,6 +30,10 @@ const problemSchema = z.object({
   year: z.number().int().min(1).max(4).optional(),
   semester: z.number().int().min(1).max(2).optional(),
   test_cases: z.string().optional(),
+  language: z.enum([
+    "javascript", "python", "c", "cpp", "java",
+    "jquery", "json", "typescript", "sql", "html", "css", "bash"
+  ]).default("javascript"),
 });
 
 type ProblemFormData = z.infer<typeof problemSchema>;
@@ -59,6 +63,7 @@ export function ProblemDialog({
     year: 1,
     semester: 1,
     test_cases: "",
+    language: "javascript",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -75,6 +80,7 @@ export function ProblemDialog({
         year: problem.year || 1,
         semester: problem.semester || 1,
         test_cases: problem.test_cases ? JSON.stringify(problem.test_cases, null, 2) : "",
+        language: problem.language || "javascript",
       });
     } else {
       // Reset form for new problem
@@ -88,6 +94,7 @@ export function ProblemDialog({
         year: 1,
         semester: 1,
         test_cases: "",
+        language: "javascript",
       });
     }
     setErrors({});
@@ -251,6 +258,32 @@ export function ProblemDialog({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="language">Programming Language *</Label>
+            <Select
+              value={formData.language}
+              onValueChange={(value) => setFormData({ ...formData, language: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[200px]">
+                <SelectItem value="javascript">JavaScript (Node.js)</SelectItem>
+                <SelectItem value="typescript">TypeScript</SelectItem>
+                <SelectItem value="python">Python</SelectItem>
+                <SelectItem value="cpp">C++</SelectItem>
+                <SelectItem value="c">C</SelectItem>
+                <SelectItem value="java">Java</SelectItem>
+                <SelectItem value="html">HTML</SelectItem>
+                <SelectItem value="css">CSS</SelectItem>
+                <SelectItem value="sql">SQL</SelectItem>
+                <SelectItem value="bash">Bash</SelectItem>
+                <SelectItem value="json">JSON</SelectItem>
+                <SelectItem value="jquery">jQuery</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

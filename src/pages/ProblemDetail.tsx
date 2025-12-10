@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, MouseEventHandler } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Code2, Play, Trophy, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { runTests } from "../utils/codeRunner";
 
 const ProblemDetail = () => {
   const { id } = useParams();
@@ -43,94 +44,80 @@ const ProblemDetail = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!code.trim()) {
-      toast.error("Please write some code before submitting");
-      return;
-    }
+  const handleSubmit: MouseEventHandler<HTMLButtonElement> = async () => {
+    if (!problem) return;
 
     setIsSubmitting(true);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         toast.error("Please log in to submit");
-        setIsSubmitting(false);
         return;
       }
 
-      console.log("Starting submission for user:", user.id, "problem:", id);
+      // Check for previous submissions to determine scoring
+      const { data: previousSubmissions } = await supabase
+        .from("submissions")
+        .select("status")
+        .eq("user_id", user.id)
+        .eq("problem_id", problem.id);
 
-      // Simple test evaluation (in production, use a proper code execution service)
-      const testCases = problem.test_cases || [];
-      const testResults = testCases.map((tc: any, i: number) => ({
-        ...tc,
-        passed: Math.random() > 0.2
-      }));
+      const hasPassed = previousSubmissions?.some(s => s.status === 'accepted');
+      const hasFailed = previousSubmissions?.some(s => s.status === 'failed');
 
-      const status = testResults.every((r: any) => r.passed) ? "accepted" : "failed";
-      const score = status === "accepted" ? problem.points : 0;
+      // Run tests
+      const results = await runTests(code, problem.test_cases || [], problem.language || 'javascript');
+      setTestResults(results);
 
-      console.log("Test results:", { status, score, testResults });
+      const allPassed = results.every((r: any) => r.passed);
 
-      // Insert submission
-      const { data: submissionData, error: submissionError } = await supabase
+      // Calculate score
+      let score = 0;
+      if (allPassed && !hasPassed) {
+        // Half points if they failed before, otherwise full points
+        score = hasFailed ? Math.floor(problem.points / 2) : problem.points;
+      }
+
+      // Save submission
+      const { error: submissionError } = await supabase
         .from("submissions")
         .insert({
           user_id: user.id,
-          problem_id: id,
+          problem_id: problem.id,
           code,
-          status,
+          status: allPassed ? 'accepted' : 'wrong_answer',
           score,
-          test_results: testResults
-        })
-        .select()
-        .single();
+          test_results: results,
+          language: problem.language || 'javascript'
+        });
 
-      if (submissionError) {
-        console.error("Submission error:", submissionError);
-        throw submissionError;
-      }
+      if (submissionError) throw submissionError;
 
-      console.log("Submission created:", submissionData);
+      if (allPassed) {
+        const pointsMessage = score > 0 ? ` +${score} points` : '';
+        toast.success(`Problem Solved!${pointsMessage}`);
 
-      // Update user profile if accepted
-      if (status === "accepted") {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-
-        if (profileError) {
-          console.error("Profile fetch error:", profileError);
-        }
-
-        if (profile) {
-          const { error: updateError } = await supabase
+        // Update user profile stats if they got points
+        if (score > 0) {
+          const { data: profile } = await supabase
             .from("profiles")
-            .update({
+            .select("total_score, problems_solved")
+            .eq("id", user.id)
+            .single();
+
+          if (profile) {
+            await supabase.from("profiles").update({
               total_score: (profile.total_score || 0) + score,
               problems_solved: (profile.problems_solved || 0) + 1
-            })
-            .eq("id", user.id);
-
-          if (updateError) {
-            console.error("Profile update error:", updateError);
-          } else {
-            console.log("Profile updated successfully");
+            }).eq("id", user.id);
           }
         }
-
-        toast.success(`🎉 Accepted! +${score} points`, {
-          className: "neon-border",
-        });
       } else {
-        toast.error("Some test cases failed. Try again!");
+        toast.error("Problem is wrong");
       }
 
-      setTestResults(testResults);
     } catch (error: any) {
       console.error("Submission failed:", error);
       toast.error(error.message || "Submission failed. Please try again.");
@@ -153,7 +140,7 @@ const ProblemDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Problem Description */}
@@ -167,9 +154,10 @@ const ProblemDetail = () => {
                 <Badge className={`
                   ${problem.difficulty === 'easy' ? 'bg-success/20 text-success border-success/30' :
                     problem.difficulty === 'medium' ? 'bg-accent/20 text-accent border-accent/30' :
-                    'bg-destructive/20 text-destructive border-destructive/30'}
+                      'bg-destructive/20 text-destructive border-destructive/30'
+                  }
                   border neon-border
-                `}>
+          `}>
                   {problem.difficulty}
                 </Badge>
               </div>
@@ -213,11 +201,16 @@ const ProblemDetail = () => {
           </Card>
 
           {/* Code Editor */}
-          <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{animationDelay: '0.1s'}}>
+          <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Code2 className="h-5 w-5 text-secondary" />
-                Code Editor
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Code2 className="h-5 w-5 text-secondary" />
+                  Code Editor
+                </div>
+                <Badge variant="outline" className="font-mono bg-secondary/10 text-secondary border-secondary/30">
+                  {problem.language || 'javascript'}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -227,8 +220,8 @@ const ProblemDetail = () => {
                 className="font-mono text-sm min-h-[400px] bg-input border-border/50 focus:border-primary/50 transition-colors"
                 placeholder="Write your solution here..."
               />
-              
-              <Button 
+
+              <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="w-full bg-gradient-neon hover:shadow-glow-pink transition-all"
@@ -242,15 +235,20 @@ const ProblemDetail = () => {
                 <div className="mt-4 space-y-2">
                   <h4 className="font-semibold text-foreground">Test Results</h4>
                   {testResults.map((result: any, i: number) => (
-                    <div 
+                    <div
                       key={i}
-                      className={`p-3 rounded-lg border ${
-                        result.passed 
-                          ? 'bg-success/10 border-success/30 text-success'
-                          : 'bg-destructive/10 border-destructive/30 text-destructive'
-                      }`}
+                      className={`p-3 rounded-lg border ${result.passed
+                        ? 'bg-success/10 border-success/30 text-success'
+                        : 'bg-destructive/10 border-destructive/30 text-destructive'
+                        }`}
                     >
                       Test Case {i + 1}: {result.passed ? '✓ Passed' : '✗ Failed'}
+                      {!result.passed && (
+                        <div className="mt-1 text-xs font-mono">
+                          <div>Expected: {String(result.expected)}</div>
+                          <div>Actual: {String(result.output)}</div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
