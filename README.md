@@ -93,6 +93,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Made By 
 -----------------------------------------------------------------------
 
-Made By Meet G. Dave with Under Guidence of Prof.Parth D. Joshi
+Made By Meet G. Dave with Under The guidence of Prof. Parth D. Joshi
 
 ----------------------------------------------------------------------- 
