@@ -43,7 +43,12 @@ const Landing = () => {
               </span>
             </div>
             <div className="flex gap-3">
-              {/*  <Link to="/auth">
+              <Link to="/about">
+                <Button variant="ghost" className="text-foreground hover:text-primary">
+                  About
+                </Button>
+              </Link>
+              <Link to="/auth">
                 <Button variant="outline" className="border-primary/30 hover:bg-primary hover:text-primary-foreground">
                   Sign In
                 </Button>
@@ -52,7 +57,7 @@ const Landing = () => {
                 <Button className="bg-gradient-neon hover:shadow-glow-pink">
                   Get Started
                 </Button>
-              </Link>*/}
+              </Link>
             </div>
           </div>
         </div>
@@ -92,35 +97,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Vision & Mission Section */}
-      <section className="py-20 relative bg-muted/20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 animate-slide-right">
-              <div className="inline-block p-3 rounded-lg bg-primary/10 border border-primary/20 mb-2">
-                <Target className="h-8 w-8 text-primary" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold neon-text">Our Vision</h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                To bridge the gap between academic learning and industry requirements by creating
-                an immersive, gamified ecosystem where students strive for excellence in coding.
-                We envision a future where every student is empowered to become a top-tier developer.
-              </p>
-            </div>
-            <div className="space-y-6 animate-slide-left">
-              <div className="inline-block p-3 rounded-lg bg-secondary/10 border border-secondary/20 mb-2">
-                <Brain className="h-8 w-8 text-secondary" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold neon-text">Our Mission</h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                Provide a structured, engaging, and competitive platform that nurtures problem-solving skills.
-                By integrating AI-driven insights and real-world challenges, we aim to transform the way
-                coding is taught and practiced in campuses globally.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Features */}
       <section className="py-20 relative">
