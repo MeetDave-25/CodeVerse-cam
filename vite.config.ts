@@ -14,11 +14,6 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      server: {
-        headers: {
-          'Cache-Control': 'public, max-age=0'
-        }
-      },
       registerType: 'autoUpdate',
       manifest: {
         name: 'CodeVerse Campus',
