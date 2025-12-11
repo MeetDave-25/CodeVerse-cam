@@ -1,36 +1,5 @@
 import { pistonRateLimiter } from './rateLimiter';
 
-declare global {
-    interface Window {
-        loadPyodide: any;
-        pyodide: any;
-    }
-}
-
-let pyodideReadyPromise: Promise<any> | null = null;
-
-const loadPyodideScript = async () => {
-    if (pyodideReadyPromise) return pyodideReadyPromise;
-
-    pyodideReadyPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js';
-        script.onload = async () => {
-            try {
-                const pyodide = await window.loadPyodide();
-                window.pyodide = pyodide;
-                resolve(pyodide);
-            } catch (err) {
-                reject(err);
-            }
-        };
-        script.onerror = (err) => reject(err);
-        document.body.appendChild(script);
-    });
-
-    return pyodideReadyPromise;
-};
-
 /**
  * Map language names to Piston API language identifiers
  * See: https://emkc.org/api/v2/piston/runtimes
@@ -54,72 +23,6 @@ const PISTON_LANGUAGE_MAP: { [key: string]: string } = {
 };
 
 /**
- * Helper for local JavaScript execution (browser)
- */
-const runLocalJs = (code: string, input: any) => {
-    try {
-        const wrappedCode = `
-            ${code}
-            return solution(input);
-        `;
-        const userFn = new Function('input', wrappedCode);
-
-        // Parse input if it's a stringified JSON
-        let parsedInput = input;
-        try {
-            parsedInput = JSON.parse(input);
-        } catch (e) {
-            // use as string
-        }
-
-        return userFn(parsedInput);
-    } catch (e: any) {
-        throw new Error(e.message);
-    }
-};
-
-/**
- * Helper for local Python execution (Pyodide - WASM)
- */
-const runLocalPython = async (code: string, input: any) => {
-    try {
-        const pyodide = await loadPyodideScript();
-
-        // Prepare input - escape safely for Python
-        const escapedInput = input.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
-
-        const pythonCode = `
-import json
-import sys
-from js import console
-
-${code}
-
-# Driver code
-try:
-    input_val = json.loads('${escapedInput}')
-except:
-    input_val = '${escapedInput}'
-
-# Check if solution function exists
-if 'solution' not in globals() and 'solution' not in locals():
-    raise Exception("Function 'solution' is not defined. Please define 'def solution(input):' in your code.")
-
-try:
-    result = solution(input_val)
-    # Return result as string
-    print(json.dumps(result))
-except Exception as e:
-    raise e
-`;
-        const output = await pyodide.runPythonAsync(pythonCode);
-        return JSON.parse(output);
-    } catch (e: any) {
-        throw new Error(e.message);
-    }
-};
-
-/**
  * Execute code using Piston API with rate limiting
  */
 const runPistonApi = async (code: string, input: any, language: string) => {
@@ -128,7 +31,18 @@ const runPistonApi = async (code: string, input: any, language: string) => {
     // Map language to Piston identifier
     const pistonLanguage = PISTON_LANGUAGE_MAP[language.toLowerCase()] || language.toLowerCase();
 
-    // Execute with rate limiting
+    // Prepare code for Python/JS if needed, or just send raw code
+    // Piston executes files. For simple input/output matching, we assume standard stdin/stdout
+    // The user's code should use input() to read inputs and print() for output
+
+    // HOWEVER, for backward compatibility with our existing problem definitions which might rely on signature 'solution(input)'
+    // we might need to wrap them OR tell the user to write script code.
+    // The user specifically asked for "simple python syntax like print('welcome')" which implies SCRIPT mode.
+    // So we invoke Piston with stdin = testCase input.
+
+    // For Python, if the input is a complex object (like a list), JSON parsing might be needed inside the user code
+    // OR we just pass it as string and they parse it.
+
     return pistonRateLimiter.execute(async () => {
         try {
             const response = await fetch(`${PISTON_API_URL}/execute`, {
@@ -144,7 +58,7 @@ const runPistonApi = async (code: string, input: any, language: string) => {
                             content: code
                         }
                     ],
-                    stdin: String(input),
+                    stdin: typeof input === 'object' ? JSON.stringify(input) : String(input),
                     args: [],
                     compile_timeout: 10000, // 10 seconds
                     run_timeout: 5000, // 5 seconds
@@ -190,74 +104,26 @@ const runPistonApi = async (code: string, input: any, language: string) => {
 
 /**
  * Main function to run test cases
- * Uses hybrid execution strategy:
- * 1. JavaScript → Browser (unlimited, fastest)
- * 2. Python → Pyodide (unlimited, fast)
- * 3. Other languages → Piston API (rate-limited to 5 req/sec)
+ * Uses Piston API for ALL languages (Execution Strategy: Cloud Runner)
  */
 export const runTests = async (code: string, testCases: any[], language: string = 'javascript') => {
     const results = [];
     const normalizedLanguage = language.toLowerCase();
 
-    console.log(`🚀 DEBUG: executing code. Lang: "${language}" (norm: "${normalizedLanguage}")`);
-    console.log(`📝 Code snippet: ${code.substring(0, 50)}...`);
+    console.log(`🚀 DEBUG: executing code via Piston. Lang: "${language}"`);
 
     for (const testCase of testCases) {
         try {
             let output: any;
             let passed: boolean;
 
-            // STRATEGY 1: Local JavaScript (Browser)
-            if (normalizedLanguage === 'javascript') {
-                console.log('👉 Using Browser JS Engine');
-                try {
-                    output = runLocalJs(code, testCase.input);
-                    passed = checkResult(output, testCase.output);
-                    results.push({
-                        passed,
-                        input: testCase.input,
-                        expected: testCase.output,
-                        output
-                    });
-                    continue;
-                } catch (err: any) {
-                    results.push({
-                        passed: false,
-                        input: testCase.input,
-                        expected: testCase.output,
-                        output: `Error: ${err.message}`
-                    });
-                    continue;
-                }
-            }
-
-            // STRATEGY 2: Local Python (Pyodide - WASM)
-            if (normalizedLanguage === 'python') {
-                try {
-                    output = await runLocalPython(code, testCase.input);
-                    passed = checkResult(output, testCase.output);
-                    results.push({
-                        passed,
-                        input: testCase.input,
-                        expected: testCase.output,
-                        output
-                    });
-                    continue;
-                } catch (err: any) {
-                    results.push({
-                        passed: false,
-                        input: testCase.input,
-                        expected: testCase.output,
-                        output: `Error: ${err.message}`
-                    });
-                    continue;
-                }
-            }
-
-            // STRATEGY 3: Piston API (C++, Java, and other languages)
+            // Strategy: Route EVERYTHING to Piston
             try {
                 output = await runPistonApi(code, testCase.input, normalizedLanguage);
+                // Clean output (remove trailing newlines common in stdout)
                 const cleanOutput = output.replace(/\n$/, '');
+
+                // Compare result
                 passed = checkResult(cleanOutput, testCase.output);
 
                 results.push({
@@ -269,7 +135,6 @@ export const runTests = async (code: string, testCases: any[], language: string 
             } catch (err: any) {
                 let errorMessage = err.message;
 
-                // Provide helpful error messages
                 if (errorMessage.includes('Rate limit queue full')) {
                     errorMessage = 'Too many submissions at once. Please wait a moment and try again.';
                 } else if (errorMessage.includes('Request timeout')) {
@@ -301,9 +166,20 @@ export const runTests = async (code: string, testCases: any[], language: string 
  * Helper to compare results
  */
 const checkResult = (output: any, expected: any) => {
-    if (typeof output === 'object') {
-        return JSON.stringify(output) === expected || JSON.stringify(output) === JSON.stringify(JSON.parse(expected));
-    } else {
-        return String(output) === String(expected);
+    // Try relaxed comparison for numbers/strings
+    if (String(output).trim() === String(expected).trim()) {
+        return true;
     }
+
+    // Try JSON comparison if applicable
+    try {
+        if (typeof output === 'object' || (typeof output === 'string' && (output.startsWith('{') || output.startsWith('[')))) {
+            return JSON.stringify(JSON.parse(output)) === JSON.stringify(expected) ||
+                JSON.stringify(JSON.parse(output)) === JSON.stringify(JSON.parse(expected));
+        }
+    } catch (e) {
+        // ignore json parse errors
+    }
+
+    return String(output) === String(expected);
 };
