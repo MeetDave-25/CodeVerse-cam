@@ -20,9 +20,9 @@ const About = () => {
                     About <span className="text-primary">CodeVerse</span>
                 </h1>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
                     {/* Vision Section */}
-                    <div className="space-y-6 animate-slide-right p-8 rounded-2xl bg-card/30 border border-primary/20 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
+                    <div className="h-full space-y-6 animate-slide-right p-8 rounded-2xl bg-card/30 border border-primary/20 backdrop-blur-sm hover:border-primary/50 transition-all duration-300">
                         <div className="inline-block p-4 rounded-xl bg-primary/10 border border-primary/20 mb-2 shadow-glow-pink">
                             <Target className="h-10 w-10 text-primary" />
                         </div>
@@ -36,7 +36,7 @@ const About = () => {
                     </div>
 
                     {/* Mission Section */}
-                    <div className="space-y-6 animate-slide-left p-8 rounded-2xl bg-card/30 border border-secondary/20 backdrop-blur-sm hover:border-secondary/50 transition-all duration-300">
+                    <div className="h-full space-y-6 animate-slide-left p-8 rounded-2xl bg-card/30 border border-secondary/20 backdrop-blur-sm hover:border-secondary/50 transition-all duration-300">
                         <div className="inline-block p-4 rounded-xl bg-secondary/10 border border-secondary/20 mb-2 shadow-glow-cyan">
                             <Brain className="h-10 w-10 text-secondary" />
                         </div>
