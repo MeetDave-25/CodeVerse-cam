@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Code2, Play, Trophy, Zap } from "lucide-react";
+import { Code2, Play, Trophy, Zap, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { runTests } from "../utils/codeRunner";
 
@@ -142,6 +142,15 @@ const ProblemDetail = () => {
       <Header />
 
       <div className="container mx-auto px-4 py-8">
+        <Button
+          variant="ghost"
+          className="mb-6 hover:bg-primary/10 hover:text-primary"
+          onClick={() => navigate("/problems")}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Problems
+        </Button>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Problem Description */}
           <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up">

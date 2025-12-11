@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Code2 } from "lucide-react";
+import { Code2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Link } from "react-router-dom";
 
 const authSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -158,7 +159,15 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <div className="absolute top-4 left-4 md:top-8 md:left-8">
+        <Link to="/">
+          <Button variant="ghost" className="hover:bg-primary/10 hover:text-primary">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">

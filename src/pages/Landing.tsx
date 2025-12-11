@@ -44,11 +44,11 @@ const Landing = () => {
             </div>
             <div className="flex gap-3">
               <Link to="/about">
-                <Button variant="ghost" className="text-foreground hover:text-primary">
+                <Button className="bg-gradient-neon hover:shadow-glow-pink">
                   About
                 </Button>
               </Link>
-              <Link to="/auth">
+              {/* <Link to="/auth">
                 <Button variant="outline" className="border-primary/30 hover:bg-primary hover:text-primary-foreground">
                   Sign In
                 </Button>
@@ -57,7 +57,7 @@ const Landing = () => {
                 <Button className="bg-gradient-neon hover:shadow-glow-pink">
                   Get Started
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
