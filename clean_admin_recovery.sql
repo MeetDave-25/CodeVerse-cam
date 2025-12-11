@@ -5,7 +5,7 @@
 DO $$
 DECLARE
   -- CONFIGURATION - CHANGE THESE VALUES!
-  target_email TEXT := 'admin@example.com';
+  target_email TEXT := 'parth_ljcca@ljku.edu.in';
   target_password TEXT := 'AdminSecret123!';
   target_name TEXT := 'Super Admin';
   
