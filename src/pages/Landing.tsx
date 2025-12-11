@@ -43,7 +43,7 @@ const Landing = () => {
               </span>
             </div>
             <div className="flex gap-3">
-              <Link to="/auth">
+              {/*  <Link to="/auth">
                 <Button variant="outline" className="border-primary/30 hover:bg-primary hover:text-primary-foreground">
                   Sign In
                 </Button>
@@ -52,7 +52,7 @@ const Landing = () => {
                 <Button className="bg-gradient-neon hover:shadow-glow-pink">
                   Get Started
                 </Button>
-              </Link>
+              </Link>*/}
             </div>
           </div>
         </div>
@@ -70,7 +70,7 @@ const Landing = () => {
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               Master algorithms, compete with peers, and build your programming expertise
-              in a gamified cyberpunk universe
+              in a gamified cyberpunk coding universe.
             </p>
             <div className="flex gap-4 justify-center">
               <Button
@@ -179,8 +179,8 @@ const Landing = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>Innovative Idea Of Dr. Manish Shah (LJKU)</p>
-          <p>© 2025 CodeVerse. Made by Meet G. Dave Under Guidance of Prof.Parth D. Joshi</p>
+          <p>Idea by Dr. Manish Shah (President, LJK Trust)</p>
+          <p>© 2025 CodeVerse. Made with Love by Meet G. Dave under the guidance of Prof. Parth D. Joshi (Assistant Professor, LJCCA)</p>
         </div>
       </footer>
     </div>
