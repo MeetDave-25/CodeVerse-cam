@@ -101,6 +101,10 @@ try:
 except:
     input_val = '${escapedInput}'
 
+# Check if solution function exists
+if 'solution' not in globals() and 'solution' not in locals():
+    raise Exception("Function 'solution' is not defined. Please define 'def solution(input):' in your code.")
+
 try:
     result = solution(input_val)
     # Return result as string
