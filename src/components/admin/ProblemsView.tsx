@@ -9,13 +9,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProblemDialog } from "./ProblemDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { problemSchema } from "@/schemas/problem";
-import { z } from "zod";
+
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { X } from "lucide-react";
 
 export function ProblemsView() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProblem, setEditingProblem] = useState<any>(null);
   const [selectedProblems, setSelectedProblems] = useState<string[]>([]);
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterSubject, setFilterSubject] = useState<string>("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: problems, isLoading } = useQuery({
@@ -29,6 +40,20 @@ export function ProblemsView() {
       return data;
     },
   });
+
+  // Derived state for filters
+  const uniqueSubjects = Array.from(new Set(problems?.map((p) => p.subject).filter(Boolean) || [])).sort();
+
+  const filteredProblems = problems?.filter(problem => {
+    const matchesYear = filterYear === "all" || (problem.year?.toString() === filterYear);
+    const matchesSubject = filterSubject === "all" || problem.subject === filterSubject;
+    return matchesYear && matchesSubject;
+  });
+
+  const clearFilters = () => {
+    setFilterYear("all");
+    setFilterSubject("all");
+  };
 
   const deleteProblem = useMutation({
     mutationFn: async (id: string) => {
@@ -99,8 +124,8 @@ export function ProblemsView() {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked && problems) {
-      setSelectedProblems(problems.map((p) => p.id));
+    if (checked && filteredProblems) {
+      setSelectedProblems(filteredProblems.map((p) => p.id));
     } else {
       setSelectedProblems([]);
     }
@@ -269,9 +294,9 @@ export function ProblemsView() {
 
       queryClient.invalidateQueries({ queryKey: ["admin-problems"] });
       toast.success(`${uniqueProblems.length} problems imported successfully!`);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Import error:", error);
-      toast.error(`Failed to import problems: ${error.message}`);
+      toast.error(`Failed to import problems: ${(error as Error).message}`);
     }
 
     // Reset file input
@@ -324,18 +349,60 @@ export function ProblemsView() {
           </div>
         </CardHeader>
         <CardContent>
+
+          <div className="flex flex-wrap gap-4 mb-6 p-4 bg-muted/20 rounded-lg border border-border/50">
+            <div className="w-[150px]">
+              <Select value={filterYear} onValueChange={setFilterYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  <SelectItem value="1">Year 1</SelectItem>
+                  <SelectItem value="2">Year 2</SelectItem>
+                  <SelectItem value="3">Year 3</SelectItem>
+                  <SelectItem value="4">Year 4</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="w-[200px]">
+              <Select value={filterSubject} onValueChange={setFilterSubject}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Subjects</SelectItem>
+                  {uniqueSubjects.map((subject) => (
+                    <SelectItem key={subject} value={subject}>
+                      {subject}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+
+            {(filterYear !== "all" || filterSubject !== "all") && (
+              <Button variant="ghost" onClick={clearFilters} className="px-3">
+                <X className="h-4 w-4 mr-2" />
+                Clear
+              </Button>
+            )}
+          </div>
+
           {isLoading ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Loading problems...</p>
             </div>
-          ) : problems && problems.length > 0 ? (
+          ) : filteredProblems && filteredProblems.length > 0 ? (
             <div className="rounded-lg border border-border/50 overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">
                       <Checkbox
-                        checked={selectedProblems.length === problems.length}
+                        checked={filteredProblems.length > 0 && selectedProblems.length === filteredProblems.length}
                         onCheckedChange={handleSelectAll}
                       />
                     </TableHead>
@@ -347,9 +414,11 @@ export function ProblemsView() {
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {problems.map((problem) => (
+                  {filteredProblems.map((problem) => (
                     <TableRow key={problem.id} className="hover:bg-muted/30">
+
                       <TableCell>
                         <Checkbox
                           checked={selectedProblems.includes(problem.id)}
@@ -403,9 +472,13 @@ export function ProblemsView() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No problems yet</p>
+              <p className="text-muted-foreground mb-4">
+                {problems && problems.length > 0
+                  ? "No problems match your filters"
+                  : "No problems yet"}
+              </p>
               <Button onClick={handleCreate} variant="outline">
-                Create your first problem
+                {problems && problems.length > 0 ? "Reset Filters" : "Create your first problem"}
               </Button>
             </div>
           )}
