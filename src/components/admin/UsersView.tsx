@@ -4,43 +4,43 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users as UsersIcon, Mail, Trophy, Target, Flame } from "lucide-react";
+import { Users as UsersIcon, Mail, Trophy, Target, Flame, Pencil, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export function UsersView() {
   const queryClient = useQueryClient();
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [deletingUser, setDeletingUser] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ full_name: "", college_year: "" });
 
   const { data: users, isLoading, error } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       console.log("Fetching users...");
-      // Fetch profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-        throw profilesError;
-      }
+      if (profilesError) throw profilesError;
 
-      // Fetch roles
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("*");
 
       if (rolesError) {
-        console.error("Error fetching roles:", rolesError);
-        // Don't fail completely if roles fail, just return profiles
         return profiles.map(profile => ({
           ...profile,
           user_roles: []
         }));
       }
 
-      // Merge data
       return profiles.map(profile => ({
         ...profile,
         user_roles: roles.filter(r => r.user_id === profile.id)
@@ -52,20 +52,12 @@ export function UsersView() {
   const [roleFilter, setRoleFilter] = useState("all");
 
   const filteredUsers = users?.filter(user => {
-    // Year filter
-    if (yearFilter !== "all") {
-      if (user.college_year?.toString() !== yearFilter) {
-        return false;
-      }
-    }
-
-    // Role filter
+    if (yearFilter !== "all" && user.college_year?.toString() !== yearFilter) return false;
+    
     if (roleFilter !== "all") {
       const role = user.user_roles as any;
       const userRole = Array.isArray(role) && role.length > 0 ? role[0].role : 'student';
-      if (userRole !== roleFilter) {
-        return false;
-      }
+      if (userRole !== roleFilter) return false;
     }
 
     return true;
@@ -73,7 +65,6 @@ export function UsersView() {
 
   const changeUserRole = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: "admin" | "student" }) => {
-      // First, get the current role entry
       const { data: existingRole, error: fetchError } = await supabase
         .from("user_roles")
         .select("id")
@@ -83,14 +74,12 @@ export function UsersView() {
       if (fetchError) throw fetchError;
 
       if (existingRole) {
-        // Update existing role
         const { error } = await supabase
           .from("user_roles")
           .update({ role: newRole })
           .eq("user_id", userId);
         if (error) throw error;
       } else {
-        // Insert new role if it doesn't exist
         const { error } = await supabase
           .from("user_roles")
           .insert([{ user_id: userId, role: newRole }]);
@@ -102,8 +91,50 @@ export function UsersView() {
       toast.success("User role updated successfully");
     },
     onError: (error: any) => {
-      console.error("Role update error:", error);
       toast.error(`Failed to update user role: ${error.message}`);
+    },
+  });
+
+  const updateUserProfile = useMutation({
+    mutationFn: async (data: { id: string; full_name: string; college_year: number }) => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ 
+          full_name: data.full_name,
+          college_year: data.college_year
+        })
+        .eq("id", data.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setEditingUser(null);
+      toast.success("User profile updated");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to update user: ${error.message}`);
+    },
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete from profiles (Cascades should handle other tables usually, but we implement what we can)
+      // Note: This does NOT delete from auth.users (requires edge function/admin api)
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+        
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setDeletingUser(null);
+      toast.success("User deleted (Profile removed)");
+    },
+    onError: (error: any) => {
+      toast.error(`Failed to delete user: ${error.message}`);
     },
   });
 
@@ -123,9 +154,16 @@ export function UsersView() {
     }).length || 0,
   };
 
+  const handleEditClick = (user: any) => {
+    setEditingUser(user);
+    setEditForm({
+      full_name: user.full_name || "",
+      college_year: user.college_year?.toString() || ""
+    });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="neon-border bg-gradient-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -168,7 +206,6 @@ export function UsersView() {
         </Card>
       </div>
 
-      {/* Users Table */}
       <Card className="neon-border bg-gradient-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -219,9 +256,8 @@ export function UsersView() {
                     <TableHead>Year</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Score</TableHead>
-                    <TableHead>Solved</TableHead>
-                    <TableHead>Streak</TableHead>
                     <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -253,7 +289,7 @@ export function UsersView() {
                               changeUserRole.mutate({ userId: user.id, newRole })
                             }
                           >
-                            <SelectTrigger className="w-28">
+                            <SelectTrigger className="w-28 h-8">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -265,14 +301,28 @@ export function UsersView() {
                         <TableCell className="text-primary font-medium">
                           {isAdmin ? "-" : (user.total_score || 0)}
                         </TableCell>
-                        <TableCell>
-                          {isAdmin ? "-" : (user.problems_solved || 0)}
-                        </TableCell>
-                        <TableCell className="text-destructive font-medium">
-                          {isAdmin ? "-" : `${user.current_streak || 0} 🔥`}
-                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 hover:text-primary"
+                              onClick={() => handleEditClick(user)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 hover:text-destructive text-destructive/70"
+                              onClick={() => setDeletingUser(user)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -287,6 +337,90 @@ export function UsersView() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit User Profile</DialogTitle>
+            <DialogDescription>
+              Make changes to the user's profile information here.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="year" className="text-right">
+                Year
+              </Label>
+              <Select
+                value={editForm.college_year}
+                onValueChange={(val) => setEditForm({...editForm, college_year: val})}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1st Year</SelectItem>
+                  <SelectItem value="2">2nd Year</SelectItem>
+                  <SelectItem value="3">3rd Year</SelectItem>
+                  <SelectItem value="4">4th Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => updateUserProfile.mutate({
+                id: editingUser.id,
+                full_name: editForm.full_name,
+                college_year: parseInt(editForm.college_year)
+              })}
+              disabled={updateUserProfile.isPending}
+            >
+              {updateUserProfile.isPending ? "Saving..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Alert */}
+      <AlertDialog open={!!deletingUser} onOpenChange={(open) => !open && setDeletingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete 
+              <span className="font-semibold text-foreground"> {deletingUser?.email} </span>
+              and remove their data from the public database.
+              <br /><br />
+              <span className="text-yellow-500 text-xs">Note: This only removes the public profile. Authentication access must be revoked separately if needed.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteUser.mutate(deletingUser.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
