@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { FileCode, Filter, Search, Calendar as CalendarIcon } from "lucide-react";
+import { FileCode, Filter, Search, Calendar as CalendarIcon, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -299,11 +299,31 @@ export function SubmissionsView() {
                               </div>
 
                               <div>
-                                <h4 className="font-semibold mb-2">Code</h4>
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-semibold">Code</h4>
+                                  {submission.code && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const blob = new Blob([submission.code], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `submission-${submission.id}.${submission.language || 'txt'}`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4 mr-2" />
+                                      Download Code
+                                    </Button>
+                                  )}
+                                </div>
                                 {submission.code ? (
-                                  <pre className="p-4 bg-muted rounded-md overflow-auto font-mono text-sm whitespace-pre-wrap">
-                                    {submission.code}
-                                  </pre>
+                                  <CodeDisplay code={submission.code} />
                                 ) : (
                                   <div className="p-4 bg-muted/30 border border-border/50 rounded-lg text-muted-foreground text-sm italic">
                                     No code available for this submission.
@@ -344,3 +364,33 @@ export function SubmissionsView() {
     </div >
   );
 }
+
+const CodeDisplay = ({ code }: { code: string }) => {
+  const [showFull, setShowFull] = useState(false);
+  const MAX_LENGTH = 3000;
+  const isLong = code.length > MAX_LENGTH;
+
+  const displayCode = showFull || !isLong ? code : code.slice(0, MAX_LENGTH) + "\n\n... (Code truncated for performance) ...";
+
+  return (
+    <div className="relative">
+      <pre className="p-4 bg-muted rounded-md overflow-auto font-mono text-sm whitespace-pre-wrap max-h-[500px]">
+        {displayCode}
+      </pre>
+      {isLong && !showFull && (
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent flex items-end justify-center pb-4">
+          <Button variant="secondary" onClick={() => setShowFull(true)}>
+            Show All Code ({code.length.toLocaleString()} chars)
+          </Button>
+        </div>
+      )}
+      {isLong && showFull && (
+        <div className="mt-2 text-center">
+          <Button variant="ghost" size="sm" onClick={() => setShowFull(false)}>
+            Show Less
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};

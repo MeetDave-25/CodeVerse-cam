@@ -34,15 +34,22 @@ const Auth = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         isRedirecting = true;
-        const { data: roleData } = await supabase
+
+        // Wait for strictly check ALL roles (handling potential duplicates)
+        const { data: roles } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
+          .eq("user_id", session.user.id);
 
-        if (roleData?.role === "admin") {
+        console.log("Session Role Check (All):", roles);
+        const isAdmin = roles?.some(r => r.role === 'admin');
+
+        if (isAdmin) {
+          toast.success("Admin role verified! Redirecting...");
           navigate("/admin", { replace: true });
         } else {
+          console.log("Not admin or no role data, assuming student.");
+          toast.info(`Logged in as: student`);
           navigate("/dashboard", { replace: true });
         }
       }
@@ -54,13 +61,15 @@ const Auth = () => {
       // Only redirect on SIGNED_IN event to prevent loops
       if (event === 'SIGNED_IN' && session?.user && !isRedirecting) {
         isRedirecting = true;
-        const { data: roleData } = await supabase
+
+        const { data: roles } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
+          .eq("user_id", session.user.id);
 
-        if (roleData?.role === "admin") {
+        const isAdmin = roles?.some(r => r.role === 'admin');
+
+        if (isAdmin) {
           navigate("/admin", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });

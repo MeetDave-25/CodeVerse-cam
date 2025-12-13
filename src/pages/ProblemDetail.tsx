@@ -200,7 +200,7 @@ const ProblemDetail = () => {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Output:</span>
-                        <div className="text-primary mt-1">{tc.output}</div>
+                        <div className="text-primary mt-1">{tc.output !== undefined ? tc.output : tc.expected}</div>
                       </div>
                     </div>
                   ))}

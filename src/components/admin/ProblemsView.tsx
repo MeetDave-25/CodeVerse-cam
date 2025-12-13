@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProblemDialog } from "./ProblemDialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { problemSchema } from "@/schemas/problem";
+import { z } from "zod";
 
 export function ProblemsView() {
   const queryClient = useQueryClient();
@@ -153,6 +155,42 @@ export function ProblemsView() {
     toast.success("Problems exported successfully");
   };
 
+  /* Template with 30 Sample Problems (10 Easy, 10 Medium, 10 Hard) */
+  const handleDownloadTemplate = () => {
+    const difficulties = ["easy", "medium", "hard"] as const;
+    const templateData = [];
+
+    // Generate 10 problems for each difficulty
+    difficulties.forEach((diff) => {
+      for (let i = 1; i <= 10; i++) {
+        templateData.push({
+          title: `${diff.charAt(0).toUpperCase() + diff.slice(1)} Problem ${i}`,
+          description: `This is a sample ${diff} problem description. Replace this with your actual problem text.`,
+          difficulty: diff,
+          subject: "Computer Science",
+          points: diff === "easy" ? 10 : diff === "medium" ? 20 : 30,
+          starter_code: "// Write your solution here\nfunction solution() {\n  \n}",
+          year: 1,
+          semester: 1,
+          language: "javascript",
+          test_cases: [
+            { "input": "sample input", "output": "sample output" }
+          ]
+        });
+      }
+    });
+
+    const dataStr = JSON.stringify(templateData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "bulk-import-template-30-problems.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Template downloaded with 30 sample problems!");
+  };
+
   const handleImport = () => {
     fileInputRef.current?.click();
   };
@@ -163,24 +201,77 @@ export function ProblemsView() {
 
     try {
       const text = await file.text();
-      const importedProblems = JSON.parse(text);
-
-      if (!Array.isArray(importedProblems)) {
-        toast.error("Invalid file format");
+      let importedProblems;
+      try {
+        importedProblems = JSON.parse(text);
+      } catch (e) {
+        toast.error("Invalid JSON file format");
         return;
       }
 
-      // Remove id fields to let Supabase generate new ones
-      const problemsToInsert = importedProblems.map(({ id, created_at, updated_at, ...problem }) => problem);
+      if (!Array.isArray(importedProblems)) {
+        toast.error("File must contain an array of problems");
+        return;
+      }
 
-      const { error } = await supabase.from("problems").insert(problemsToInsert);
+      // Validate each problem against the schema
+      const validProblems = [];
+      const errors = [];
+
+      for (const [index, problem] of importedProblems.entries()) {
+        const result = problemSchema.safeParse(problem);
+        if (result.success) {
+          // Clean up test_cases if it's an array (stringify it for DB if column is text/jsonb depending on impl)
+          // Assuming DB handles JSONB or we need to stringify. 
+          // Looking at ProblemDialog, it parses/stringifies test_cases.
+          // Let's assume the API expects the raw object if it's JSONB, or we check existing code.
+          // Existing code: const problemsToInsert = importedProblems.map(({ id, ... }) => problem);
+          // So it inserts directly.
+          validProblems.push(result.data);
+        } else {
+          errors.push(`Row ${index + 1}: ${result.error.issues[0].message}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        console.error("Validation errors:", errors);
+        toast.error(`Found ${errors.length} validation errors. Check console for details.`);
+        // Optional: Allow partial import or stop? Let's stop to be safe or ask user. 
+        // For now, let's stop to prevent bad data.
+        if (errors.length > 5) {
+          toast.error(`First 5 errors: ${errors.slice(0, 5).join(", ")}`);
+        }
+        return;
+      }
+
+      if (validProblems.length === 0) {
+        toast.error("No valid problems found to import");
+        return;
+      }
+
+      // Remove id/timestamps to ensure fresh insertion
+      const titleSet = new Set(problems?.map(p => p.title) || []);
+      const uniqueProblems = validProblems.filter(p => !titleSet.has(p.title));
+
+      if (uniqueProblems.length < validProblems.length) {
+        const skipped = validProblems.length - uniqueProblems.length;
+        toast.info(`Skipping ${skipped} duplicate problems (by title)`);
+      }
+
+      if (uniqueProblems.length === 0) {
+        toast.warning("All problems are duplicates!");
+        return;
+      }
+
+      const { error } = await supabase.from("problems").insert(uniqueProblems);
 
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["admin-problems"] });
-      toast.success(`${problemsToInsert.length} problem(s) imported successfully`);
-    } catch (error) {
-      toast.error("Failed to import problems");
+      toast.success(`${uniqueProblems.length} problems imported successfully!`);
+    } catch (error: any) {
+      console.error("Import error:", error);
+      toast.error(`Failed to import problems: ${error.message}`);
     }
 
     // Reset file input
@@ -216,6 +307,10 @@ export function ProblemsView() {
               <Button variant="outline" onClick={handleExport}>
                 <Download className="h-4 w-4 mr-2" />
                 Export
+              </Button>
+              <Button variant="outline" onClick={handleDownloadTemplate}>
+                <Download className="h-4 w-4 mr-2" />
+                Template
               </Button>
               <Button variant="outline" onClick={handleImport}>
                 <Upload className="h-4 w-4 mr-2" />
@@ -271,10 +366,10 @@ export function ProblemsView() {
                       <TableCell>
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${problem.difficulty === "easy"
-                              ? "bg-success/20 text-success"
-                              : problem.difficulty === "medium"
-                                ? "bg-accent/20 text-accent"
-                                : "bg-destructive/20 text-destructive"
+                            ? "bg-success/20 text-success"
+                            : problem.difficulty === "medium"
+                              ? "bg-accent/20 text-accent"
+                              : "bg-destructive/20 text-destructive"
                             }`}
                         >
                           {problem.difficulty}

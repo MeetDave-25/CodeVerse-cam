@@ -124,12 +124,13 @@ export const runTests = async (code: string, testCases: any[], language: string 
                 const cleanOutput = output.replace(/\n$/, '');
 
                 // Compare result
-                passed = checkResult(cleanOutput, testCase.output);
+                const expectedOutput = testCase.output !== undefined ? testCase.output : testCase.expected;
+                passed = checkResult(cleanOutput, expectedOutput);
 
                 results.push({
                     passed,
                     input: testCase.input,
-                    expected: testCase.output,
+                    expected: expectedOutput,
                     output: cleanOutput
                 });
             } catch (err: any) {
@@ -144,7 +145,7 @@ export const runTests = async (code: string, testCases: any[], language: string 
                 results.push({
                     passed: false,
                     input: testCase.input,
-                    expected: testCase.output,
+                    expected: testCase.output !== undefined ? testCase.output : testCase.expected,
                     output: errorMessage
                 });
             }
@@ -153,7 +154,7 @@ export const runTests = async (code: string, testCases: any[], language: string 
             results.push({
                 passed: false,
                 input: testCase.input,
-                expected: testCase.output,
+                expected: testCase.output !== undefined ? testCase.output : testCase.expected,
                 output: `Unexpected Error: ${error.message}`
             });
         }
