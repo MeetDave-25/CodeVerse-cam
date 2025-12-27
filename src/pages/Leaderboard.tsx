@@ -4,16 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Medal, Award } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Leaderboard = () => {
   const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [yearFilter, setYearFilter] = useState<string>("all");
 
   useEffect(() => {
     checkAuth();
     fetchLeaderboard();
-  }, []);
+  }, [yearFilter]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -61,7 +63,7 @@ const Leaderboard = () => {
     console.log('🚫 Admin User IDs:', [...adminUserIds]);
 
     // Filter out admin users - only show students who are NOT admins
-    const studentProfiles = profiles?.filter(profile => {
+    let studentProfiles = profiles?.filter(profile => {
       // If user is an admin, EXCLUDE them immediately
       if (adminUserIds.has(profile.id)) {
         return false;
@@ -70,11 +72,21 @@ const Leaderboard = () => {
       // Must have a student role
       const hasStudentRole = roles?.some(r => r.user_id === profile.id && r.role === 'student');
       return hasStudentRole;
-    }).slice(0, 50); // Take top 50 students
+    });
 
-    console.log('🎓 Student profiles for leaderboard:', studentProfiles);
+    // Apply year filter
+    if (yearFilter !== "all") {
+      const selectedYear = parseInt(yearFilter);
+      studentProfiles = studentProfiles?.filter(profile => profile.college_year === selectedYear);
+      console.log(`🎓 Filtered to Year ${selectedYear}:`, studentProfiles);
+    }
 
-    setLeaderboard(studentProfiles || []);
+    // Take top 50 students
+    const topStudents = studentProfiles?.slice(0, 50);
+
+    console.log('🎓 Student profiles for leaderboard:', topStudents);
+
+    setLeaderboard(topStudents || []);
     setIsLoading(false);
   };
 
@@ -104,6 +116,23 @@ const Leaderboard = () => {
           <p className="text-muted-foreground">
             Top performers across all students
           </p>
+        </div>
+
+        <div className="mb-6 animate-slide-up" style={{ animationDelay: '0.05s' }}>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-muted-foreground">Filter by Year:</label>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="w-[180px] bg-gradient-card border-border/50">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="1">1st Year</SelectItem>
+                <SelectItem value="2">2nd Year</SelectItem>
+                <SelectItem value="3">3rd Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -145,6 +174,11 @@ const Leaderboard = () => {
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {user.problems_solved} problems solved
+                          {user.college_year && (
+                            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-medium border border-primary/30">
+                              Year {user.college_year}
+                            </span>
+                          )}
                         </p>
                       </div>
 

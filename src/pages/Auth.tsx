@@ -23,6 +23,7 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [signInRole, setSignInRole] = useState<"student" | "admin">("student");
   const [signUpRole, setSignUpRole] = useState<"student" | "admin">("student");
+  const [collegeYear, setCollegeYear] = useState<number>(1);
 
   useEffect(() => {
     let isRedirecting = false;
@@ -99,6 +100,7 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
+            college_year: collegeYear,
             role: 'student', // All signups are students - admins created manually
           },
         },
@@ -252,6 +254,23 @@ const Auth = () => {
                       placeholder="John Doe"
                       required
                     />
+                  </div>
+                  <div className="space-y-3">
+                    <Label>College Year</Label>
+                    <RadioGroup value={collegeYear.toString()} onValueChange={(value) => setCollegeYear(parseInt(value))} className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="1" id="year-1" />
+                        <Label htmlFor="year-1" className="cursor-pointer font-normal">1st Year</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="2" id="year-2" />
+                        <Label htmlFor="year-2" className="cursor-pointer font-normal">2nd Year</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="3" id="year-3" />
+                        <Label htmlFor="year-3" className="cursor-pointer font-normal">3rd Year</Label>
+                      </div>
+                    </RadioGroup>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>

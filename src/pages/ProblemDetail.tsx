@@ -44,6 +44,75 @@ const ProblemDetail = () => {
     }
   };
 
+  const checkAndAwardBadges = async (userId: string, updatedProfile: any) => {
+    try {
+      // Fetch all available badges
+      const { data: allBadges, error: badgesError } = await supabase
+        .from("badges")
+        .select("*");
+
+      if (badgesError) {
+        console.error("Error fetching badges:", badgesError);
+        return;
+      }
+
+      // Fetch user's already earned badges
+      const { data: earnedBadges, error: earnedError } = await supabase
+        .from("user_badges")
+        .select("badge_id")
+        .eq("user_id", userId);
+
+      if (earnedError) {
+        console.error("Error fetching earned badges:", earnedError);
+        return;
+      }
+
+      const earnedBadgeIds = new Set(earnedBadges?.map(b => b.badge_id) || []);
+
+      // Check each badge's criteria
+      for (const badge of allBadges || []) {
+        // Skip if already earned
+        if (earnedBadgeIds.has(badge.id)) {
+          continue;
+        }
+
+        const criteria = badge.criteria as any;
+        let shouldAward = false;
+
+        // Check different criteria types
+        if (criteria.problems_solved !== undefined) {
+          shouldAward = updatedProfile.problems_solved >= criteria.problems_solved;
+        } else if (criteria.streak !== undefined) {
+          shouldAward = updatedProfile.current_streak >= criteria.streak;
+        }
+        // Note: time_under criteria would need submission time_taken, which we don't track yet
+
+        if (shouldAward) {
+          // Award the badge
+          const { error: insertError } = await supabase
+            .from("user_badges")
+            .insert({
+              user_id: userId,
+              badge_id: badge.id,
+            });
+
+          // Ignore duplicate errors (UNIQUE constraint)
+          if (insertError && !insertError.message.includes("duplicate")) {
+            console.error("Error awarding badge:", insertError);
+          } else if (!insertError) {
+            // Show success notification
+            toast.success(`${badge.icon} Badge Earned: ${badge.name}!`, {
+              description: badge.description || undefined,
+            });
+            console.log(`🏆 Awarded badge: ${badge.name}`);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error in checkAndAwardBadges:", error);
+    }
+  };
+
   const handleSubmit: MouseEventHandler<HTMLButtonElement> = async () => {
     if (!problem) return;
 
@@ -103,15 +172,21 @@ const ProblemDetail = () => {
         if (score > 0) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("total_score, problems_solved")
+            .select("total_score, problems_solved, current_streak")
             .eq("id", user.id)
             .single();
 
           if (profile) {
-            await supabase.from("profiles").update({
+            const updatedProfile = {
               total_score: (profile.total_score || 0) + score,
-              problems_solved: (profile.problems_solved || 0) + 1
-            }).eq("id", user.id);
+              problems_solved: (profile.problems_solved || 0) + 1,
+              current_streak: profile.current_streak || 0,
+            };
+
+            await supabase.from("profiles").update(updatedProfile).eq("id", user.id);
+
+            // Check and award badges based on updated stats
+            await checkAndAwardBadges(user.id, updatedProfile);
           }
         }
       } else {

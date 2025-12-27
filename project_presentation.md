@@ -1,11 +1,11 @@
-# Logic Ladder Pro 🚀
+# CodeVerse🚀
 ### The Ultimate Coding & Learning Platform
 
 ---
 
 ## 🌟 Introduction
 
-**Logic Ladder Pro** is a next-generation coding assessment platform designed to revolutionize how students learn and practice programming. 
+**CodeVerse** is a next-generation coding assessment platform designed to revolutionize how students learn and practice programming. 
 
 Unlike traditional platforms, it offers a seamless, **Docker-free** execution environment perfect for college labs and personal devices.
 
@@ -35,8 +35,7 @@ graph TD
     C -->|Submit Code| E{Execution Engine}
     
     subgraph "Hybrid Engine"
-    E -->|JS / Python| F[Browser Runtime]
-    E -->|C++ / Java| G[Piston API]
+    E -->|C++ / Java / JS / Python| [Piston API]
     end
     
     F -->|Result| C
@@ -65,7 +64,7 @@ sequenceDiagram
     App->>DB: Verify Credentials
     DB-->>App: Access Granted
     
-    User->>App: Select Problem (C++)
+    Python>> App: Select Problem (Pyhton,C,DSA)
     App->>User: Display Editor
     
     User->>App: Writes Code & Clicks Submit
@@ -100,10 +99,10 @@ sequenceDiagram
 
 Many college labs restrict installing Docker or virtual machines. 
 
-**Logic Ladder Pro** solves this by:
+**CodeVesre** solves this by:
 1.  **Using APIs** (Piston) for heavy languages.
-2.  **Using WebAssembly** (Pyodide) for Python.
-3.  **Using Browser Native** for JavaScript.
+2.  **Alternet Option :- Using WebAssembly** (Pyodide) for Python.
+3.  **Alternet Option :- Using Browser Native** for JavaScript.
 
 **Result:** Zero setup required. Runs on any browser.
 
@@ -120,10 +119,10 @@ Many college labs restrict installing Docker or virtual machines.
 
 ## 🏁 Conclusion
 
-**Logic Ladder Pro** is not just a tool; it's a complete ecosystem for nurturing the next generation of developers. 
+**CodeVerse** is not just a tool; it's a complete ecosystem for nurturing the next generation of developers. 
 
 **Thank You!** 
 👋
 
 ---
-*Created with ❤️ by the Logic Ladder Team*
+*Created with ❤️ by the CodeVerse Team*

@@ -1,0 +1,23 @@
+{
+  "name": "CodeVerse Campus - Level Up Your Coding Skills",
+  "short_name": "CodeVerse Campus",
+  "description": "Practice coding problems organized by year and semester. Earn badges, climb leaderboards, and get AI-powered insights.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
