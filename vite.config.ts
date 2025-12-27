@@ -5,11 +5,18 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',
   server: {
     host: true,
     port: 3000,
     open: true,
     strictPort: false,
+    allowedHosts: [
+      'codeverse-cam.onrender.com',
+      '.onrender.com', // Allow all Render.com subdomains
+      'localhost',
+      '.localhost',
+    ],
   },
   plugins: [
     react(),

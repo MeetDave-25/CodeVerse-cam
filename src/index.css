@@ -1,3 +1,8 @@
+/* 
+  Note: @tailwind and @apply are Tailwind CSS directives.
+  They are processed by PostCSS during build and are not CSS errors.
+  To suppress IDE warnings, configure your editor's CSS validation settings.
+*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -50,7 +55,7 @@ All colors MUST be HSL.
     --gradient-hero: linear-gradient(135deg, hsl(315 100% 60%) 0%, hsl(270 100% 60%) 50%, hsl(180 100% 50%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(270 25% 8% / 0.8) 0%, hsl(270 30% 10% / 0.9) 100%);
     --gradient-neon: linear-gradient(90deg, hsl(315 100% 60%) 0%, hsl(180 100% 50%) 100%);
-    
+
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.5);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.6);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.7);
@@ -95,7 +100,7 @@ All colors MUST be HSL.
 
     --gradient-hero: linear-gradient(135deg, hsl(315 100% 60%) 0%, hsl(270 100% 60%) 50%, hsl(180 100% 50%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(270 25% 8% / 0.8) 0%, hsl(270 30% 10% / 0.9) 100%);
-    
+
     --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.5);
     --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.6);
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.7);
@@ -111,24 +116,48 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background-image: 
+    background-image:
       radial-gradient(circle at 20% 50%, hsl(315 100% 60% / 0.1) 0%, transparent 50%),
       radial-gradient(circle at 80% 80%, hsl(180 100% 50% / 0.1) 0%, transparent 50%),
       radial-gradient(circle at 40% 20%, hsl(270 100% 60% / 0.08) 0%, transparent 50%);
   }
 
   @keyframes neon-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.8;
+    }
   }
 
   @keyframes glitch {
-    0% { transform: translate(0); }
-    20% { transform: translate(-2px, 2px); }
-    40% { transform: translate(-2px, -2px); }
-    60% { transform: translate(2px, 2px); }
-    80% { transform: translate(2px, -2px); }
-    100% { transform: translate(0); }
+    0% {
+      transform: translate(0);
+    }
+
+    20% {
+      transform: translate(-2px, 2px);
+    }
+
+    40% {
+      transform: translate(-2px, -2px);
+    }
+
+    60% {
+      transform: translate(2px, 2px);
+    }
+
+    80% {
+      transform: translate(2px, -2px);
+    }
+
+    100% {
+      transform: translate(0);
+    }
   }
 
   @keyframes slide-up {
@@ -136,6 +165,7 @@ All colors MUST be HSL.
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -143,32 +173,56 @@ All colors MUST be HSL.
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-    20%, 40%, 60%, 80% { transform: translateX(10px); }
+
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+      transform: translateX(-10px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+      transform: translateX(10px);
+    }
   }
 
   .neon-text {
-    text-shadow: 
+    text-shadow:
       0 0 10px hsl(var(--primary) / 0.8),
       0 0 20px hsl(var(--primary) / 0.6),
       0 0 30px hsl(var(--primary) / 0.4);
   }
 
   .neon-border {
-    box-shadow: 
+    box-shadow:
       0 0 5px hsl(var(--primary) / 0.5),
       0 0 10px hsl(var(--primary) / 0.3),
       inset 0 0 5px hsl(var(--primary) / 0.2);
   }
 
   .cyber-grid {
-    background-image: 
+    background-image:
       linear-gradient(hsl(var(--border)) 1px, transparent 1px),
       linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
     background-size: 20px 20px;
