@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Code2, Play, Trophy, Zap, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { runTests } from "../utils/codeRunner";
+import { SuccessModal } from "@/components/SuccessModal";
 
 const ProblemDetail = () => {
   const { id } = useParams();
@@ -18,6 +19,10 @@ const ProblemDetail = () => {
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [earnedPoints, setEarnedPoints] = useState(0);
+  const [earnedBadges, setEarnedBadges] = useState<any[]>([]);
+  const [showErrorShake, setShowErrorShake] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -45,6 +50,8 @@ const ProblemDetail = () => {
   };
 
   const checkAndAwardBadges = async (userId: string, updatedProfile: any) => {
+    const newlyEarnedBadges: any[] = [];
+
     try {
       // Fetch all available badges
       const { data: allBadges, error: badgesError } = await supabase
@@ -53,7 +60,7 @@ const ProblemDetail = () => {
 
       if (badgesError) {
         console.error("Error fetching badges:", badgesError);
-        return;
+        return newlyEarnedBadges;
       }
 
       // Fetch user's already earned badges
@@ -64,7 +71,7 @@ const ProblemDetail = () => {
 
       if (earnedError) {
         console.error("Error fetching earned badges:", earnedError);
-        return;
+        return newlyEarnedBadges;
       }
 
       const earnedBadgeIds = new Set(earnedBadges?.map(b => b.badge_id) || []);
@@ -100,9 +107,11 @@ const ProblemDetail = () => {
           if (insertError && !insertError.message.includes("duplicate")) {
             console.error("Error awarding badge:", insertError);
           } else if (!insertError) {
-            // Show success notification
-            toast.success(`${badge.icon} Badge Earned: ${badge.name}!`, {
-              description: badge.description || undefined,
+            // Add to newly earned badges for modal display
+            newlyEarnedBadges.push({
+              icon: badge.icon,
+              name: badge.name,
+              description: badge.description || "",
             });
             console.log(`🏆 Awarded badge: ${badge.name}`);
           }
@@ -111,6 +120,8 @@ const ProblemDetail = () => {
     } catch (error) {
       console.error("Error in checkAndAwardBadges:", error);
     }
+
+    return newlyEarnedBadges;
   };
 
   const handleSubmit: MouseEventHandler<HTMLButtonElement> = async () => {
@@ -165,9 +176,6 @@ const ProblemDetail = () => {
       if (submissionError) throw submissionError;
 
       if (allPassed) {
-        const pointsMessage = score > 0 ? ` +${score} points` : '';
-        toast.success(`Problem Solved!${pointsMessage}`);
-
         // Update user profile stats if they got points
         if (score > 0) {
           const { data: profile } = await supabase
@@ -186,11 +194,23 @@ const ProblemDetail = () => {
             await supabase.from("profiles").update(updatedProfile).eq("id", user.id);
 
             // Check and award badges based on updated stats
-            await checkAndAwardBadges(user.id, updatedProfile);
+            const badges = await checkAndAwardBadges(user.id, updatedProfile);
+
+            // Show success modal with points and badges
+            setEarnedPoints(score);
+            setEarnedBadges(badges);
+            setShowSuccessModal(true);
           }
+        } else {
+          // No points but still solved (already solved before)
+          toast.success("Problem Solved! (Already completed)");
+          setTimeout(() => navigate("/problems"), 1500);
         }
       } else {
-        toast.error("Problem is wrong");
+        // Failed - show error with shake animation
+        toast.error("Some test cases failed. Try again!");
+        setShowErrorShake(true);
+        setTimeout(() => setShowErrorShake(false), 500);
       }
 
     } catch (error: any) {
@@ -308,7 +328,7 @@ const ProblemDetail = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full bg-gradient-neon hover:shadow-glow-pink transition-all"
+                className={`w-full bg-gradient-neon hover:shadow-glow-pink transition-all ${showErrorShake ? 'animate-shake' : ''}`}
                 size="lg"
               >
                 <Play className="mr-2 h-4 w-4" />
@@ -323,7 +343,7 @@ const ProblemDetail = () => {
                       key={i}
                       className={`p-3 rounded-lg border ${result.passed
                         ? 'bg-success/10 border-success/30 text-success'
-                        : 'bg-destructive/10 border-destructive/30 text-destructive'
+                        : 'bg-destructive/10 border-destructive/30 text-destructive animate-shake'
                         }`}
                     >
                       Test Case {i + 1}: {result.passed ? '✓ Passed' : '✗ Failed'}
@@ -340,6 +360,17 @@ const ProblemDetail = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={showSuccessModal}
+          points={earnedPoints}
+          badges={earnedBadges}
+          onContinue={() => {
+            setShowSuccessModal(false);
+            navigate("/problems");
+          }}
+        />
       </div>
     </div>
   );
