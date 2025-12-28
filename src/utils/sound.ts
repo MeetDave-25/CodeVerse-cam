@@ -10,50 +10,100 @@ const playSynthSound = (type: 'success' | 'error') => {
         audioContext.resume();
     }
 
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    const now = audioContext.currentTime;
 
     if (type === 'success') {
-        // Success: Ascending 5th (C -> G) with a "ping" envelope
-        // Note 1
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-        oscillator.frequency.exponentialRampToValueAtTime(783.99, audioContext.currentTime + 0.1); // G5
-
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-
-        // Add a little "sparkle" with a second oscillator
+        // CYBERPUNK SUCCESS: Arpeggio + Filter Sweep
+        // Oscillators
+        const osc1 = audioContext.createOscillator();
         const osc2 = audioContext.createOscillator();
-        const gain2 = audioContext.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
+        const osc3 = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const filter = audioContext.createBiquadFilter();
 
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(1046.50, audioContext.currentTime); // C6
-        gain2.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        // Connect graph
+        osc1.connect(filter);
+        osc2.connect(filter);
+        osc3.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioContext.destination);
 
-        osc2.start();
-        osc2.stop(audioContext.currentTime + 0.3);
+        // Settings
+        osc1.type = 'sawtooth';
+        osc2.type = 'square';
+        osc3.type = 'sine';
+
+        // Arpeggio (C Major 7 style for futuristic feel)
+        osc1.frequency.setValueAtTime(261.63, now); // C4
+        osc1.frequency.setValueAtTime(329.63, now + 0.1); // E4
+        osc1.frequency.setValueAtTime(392.00, now + 0.2); // G4
+        osc1.frequency.setValueAtTime(493.88, now + 0.3); // B4
+        osc1.frequency.setValueAtTime(523.25, now + 0.4); // C5
+        osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 1.2); // Glide to C6
+
+        // Harmony/Detune for thickness
+        osc2.frequency.setValueAtTime(261.63 * 1.01, now);
+        osc2.frequency.linearRampToValueAtTime(523.25, now + 0.4);
+
+        // Sub-bass
+        osc3.frequency.setValueAtTime(65.41, now); // C2
+        osc3.frequency.linearRampToValueAtTime(130.81, now + 1.0);
+
+        // Filter Sweep (Lowpass opening up = "Cyberpunk Swell")
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(200, now);
+        filter.frequency.exponentialRampToValueAtTime(8000, now + 0.8);
+
+        // Volume Envelope
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.3, now + 0.1); // Attack
+        gain.gain.setValueAtTime(0.3, now + 0.8); // Sustain
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5); // Release
+
+        // Start/Stop
+        osc1.start(now);
+        osc2.start(now);
+        osc3.start(now);
+
+        osc1.stop(now + 1.5);
+        osc2.stop(now + 1.5);
+        osc3.stop(now + 1.5);
 
     } else {
-        // Error: Low buzzing sawtooth descending
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-        oscillator.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 0.3);
+        // RETRO GAME OVER: Descending 8-bit "Glitch"
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        const lfo = audioContext.createOscillator(); // For glitchy modulation
+        const lfoGain = audioContext.createGain();
 
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        // Connect modulation
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
 
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.3);
+        // Settings
+        osc.type = 'sawtooth'; // Harsh, 8-bit sound
+        lfo.type = 'square'; // Abrupt changes
+
+        // Pitch Drop
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.8); // Long slide down
+
+        // LFO Modulation (Glitch effect)
+        lfo.frequency.setValueAtTime(50, now); // Fast modulation
+        lfoGain.gain.setValueAtTime(100, now); // Depth of modulation
+
+        // Volume Envelope
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+        // Start/Stop
+        osc.start(now);
+        lfo.start(now);
+
+        osc.stop(now + 0.8);
+        lfo.stop(now + 0.8);
     }
 };
 
