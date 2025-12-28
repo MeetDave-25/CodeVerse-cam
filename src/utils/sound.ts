@@ -55,33 +55,59 @@ const playSynthSound = (type: 'success' | 'error') => {
         sparkle.stop(now + 0.6);
 
     } else {
-        // DIGITAL SYSTEM FAIL: "Access Denied" (Double Low Beep)
-        // Sound like a futuristic UI blocking an action
+        // ANGRY ANIMAL GROWL
+        // We'll use Frequency Modulation (FM) to create a rough, vocal texture
 
-        const playLowBeep = (startTime: number) => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
+        // Carrier (The "voice")
+        const carrier = audioContext.createOscillator();
+        const carrierGain = audioContext.createGain();
 
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
+        // Modulator (The "roughness" or "throatiness")
+        const modulator = audioContext.createOscillator();
+        const modulatorGain = audioContext.createGain();
 
-            osc.type = 'sawtooth'; // Slightly buzzy
+        // Filter to dampen the harshness and make it sound more organic
+        const filter = audioContext.createBiquadFilter();
 
-            // Pitch drop effect
-            osc.frequency.setValueAtTime(150, startTime);
-            osc.frequency.exponentialRampToValueAtTime(100, startTime + 0.15);
+        // Patch bay
+        modulator.connect(modulatorGain);
+        modulatorGain.connect(carrier.frequency); // FM Synthesis
+        carrier.connect(filter);
+        filter.connect(carrierGain);
+        carrierGain.connect(audioContext.destination);
 
-            gain.gain.setValueAtTime(0, startTime);
-            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+        // Settings
+        carrier.type = 'sawtooth'; // Rich in harmonics
+        modulator.type = 'sawtooth'; // Harsh modulator
 
-            osc.start(startTime);
-            osc.stop(startTime + 0.2);
-        };
+        // Pitch Envelope (The "Growl" contour)
+        const startFreq = 150;
+        carrier.frequency.setValueAtTime(startFreq, now);
+        carrier.frequency.linearRampToValueAtTime(80, now + 0.6); // Drop in pitch
 
-        // Play twice
-        playLowBeep(now);
-        playLowBeep(now + 0.15);
+        // Roughness Envelope (Modulation amount)
+        modulator.frequency.setValueAtTime(40, now); // Fast modulation (roughness)
+        modulatorGain.gain.setValueAtTime(500, now); // Intense modulation
+        modulatorGain.gain.linearRampToValueAtTime(200, now + 0.6); // Less intense as it fades
+
+        // Filter Envelope (Closing mouth)
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.frequency.linearRampToValueAtTime(200, now + 0.6);
+        filter.Q.value = 1; // Slight resonance
+
+        // Amplitude Envelope
+        carrierGain.gain.setValueAtTime(0, now);
+        carrierGain.gain.linearRampToValueAtTime(0.4, now + 0.1); // Attack
+        carrierGain.gain.linearRampToValueAtTime(0.3, now + 0.4); // Sustain
+        carrierGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8); // Release
+
+        // Start/Stop
+        carrier.start(now);
+        modulator.start(now);
+
+        carrier.stop(now + 0.8);
+        modulator.stop(now + 0.8);
     }
 };
 
