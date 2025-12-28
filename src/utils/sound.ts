@@ -13,97 +13,75 @@ const playSynthSound = (type: 'success' | 'error') => {
     const now = audioContext.currentTime;
 
     if (type === 'success') {
-        // CYBERPUNK SUCCESS: Arpeggio + Filter Sweep
-        // Oscillators
-        const osc1 = audioContext.createOscillator();
-        const osc2 = audioContext.createOscillator();
-        const osc3 = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const filter = audioContext.createBiquadFilter();
+        // MAGICAL SUCCESS: Ascending Major Chord with "Shimmer"
+        // We'll play a rapid arpeggio that blurs into a chord: C5 - E5 - G5 - C6
+        const frequencies = [523.25, 659.25, 783.99, 1046.50];
 
-        // Connect graph
-        osc1.connect(filter);
-        osc2.connect(filter);
-        osc3.connect(filter);
-        filter.connect(gain);
-        gain.connect(audioContext.destination);
+        frequencies.forEach((freq, index) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
 
-        // Settings
-        osc1.type = 'sawtooth';
-        osc2.type = 'square';
-        osc3.type = 'sine';
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
 
-        // Arpeggio (C Major 7 style for futuristic feel)
-        osc1.frequency.setValueAtTime(261.63, now); // C4
-        osc1.frequency.setValueAtTime(329.63, now + 0.1); // E4
-        osc1.frequency.setValueAtTime(392.00, now + 0.2); // G4
-        osc1.frequency.setValueAtTime(493.88, now + 0.3); // B4
-        osc1.frequency.setValueAtTime(523.25, now + 0.4); // C5
-        osc1.frequency.exponentialRampToValueAtTime(1046.50, now + 1.2); // Glide to C6
+            // Use mixture of waves for a "bell" like tone
+            osc.type = index % 2 === 0 ? 'sine' : 'triangle';
 
-        // Harmony/Detune for thickness
-        osc2.frequency.setValueAtTime(261.63 * 1.01, now);
-        osc2.frequency.linearRampToValueAtTime(523.25, now + 0.4);
+            osc.frequency.setValueAtTime(freq, now + (index * 0.05)); // Staggered entry
 
-        // Sub-bass
-        osc3.frequency.setValueAtTime(65.41, now); // C2
-        osc3.frequency.linearRampToValueAtTime(130.81, now + 1.0);
+            // Bell Envelope: Quick attack, long exponential decay
+            const startTime = now + (index * 0.05);
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02); // Attack
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.5); // Long Decay
 
-        // Filter Sweep (Lowpass opening up = "Cyberpunk Swell")
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(200, now);
-        filter.frequency.exponentialRampToValueAtTime(8000, now + 0.8);
+            osc.start(startTime);
+            osc.stop(startTime + 1.5);
+        });
 
-        // Volume Envelope
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.3, now + 0.1); // Attack
-        gain.gain.setValueAtTime(0.3, now + 0.8); // Sustain
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5); // Release
+        // Add a tiny bit of high-pitch sparkle
+        const sparkle = audioContext.createOscillator();
+        const sparkleGain = audioContext.createGain();
+        sparkle.connect(sparkleGain);
+        sparkleGain.connect(audioContext.destination);
 
-        // Start/Stop
-        osc1.start(now);
-        osc2.start(now);
-        osc3.start(now);
+        sparkle.type = 'sine';
+        sparkle.frequency.setValueAtTime(2093.00, now + 0.2); // C7
+        sparkleGain.gain.setValueAtTime(0, now + 0.2);
+        sparkleGain.gain.linearRampToValueAtTime(0.05, now + 0.25);
+        sparkleGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
-        osc1.stop(now + 1.5);
-        osc2.stop(now + 1.5);
-        osc3.stop(now + 1.5);
+        sparkle.start(now + 0.2);
+        sparkle.stop(now + 0.6);
 
     } else {
-        // RETRO GAME OVER: Descending 8-bit "Glitch"
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        const lfo = audioContext.createOscillator(); // For glitchy modulation
-        const lfoGain = audioContext.createGain();
+        // DIGITAL SYSTEM FAIL: "Access Denied" (Double Low Beep)
+        // Sound like a futuristic UI blocking an action
 
-        // Connect modulation
-        lfo.connect(lfoGain);
-        lfoGain.connect(osc.frequency);
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
+        const playLowBeep = (startTime: number) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
 
-        // Settings
-        osc.type = 'sawtooth'; // Harsh, 8-bit sound
-        lfo.type = 'square'; // Abrupt changes
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
 
-        // Pitch Drop
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.exponentialRampToValueAtTime(50, now + 0.8); // Long slide down
+            osc.type = 'sawtooth'; // Slightly buzzy
 
-        // LFO Modulation (Glitch effect)
-        lfo.frequency.setValueAtTime(50, now); // Fast modulation
-        lfoGain.gain.setValueAtTime(100, now); // Depth of modulation
+            // Pitch drop effect
+            osc.frequency.setValueAtTime(150, startTime);
+            osc.frequency.exponentialRampToValueAtTime(100, startTime + 0.15);
 
-        // Volume Envelope
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
 
-        // Start/Stop
-        osc.start(now);
-        lfo.start(now);
+            osc.start(startTime);
+            osc.stop(startTime + 0.2);
+        };
 
-        osc.stop(now + 0.8);
-        lfo.stop(now + 0.8);
+        // Play twice
+        playLowBeep(now);
+        playLowBeep(now + 0.15);
     }
 };
 
