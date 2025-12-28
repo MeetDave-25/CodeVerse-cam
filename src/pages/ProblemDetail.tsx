@@ -11,6 +11,7 @@ import { Code2, Play, Trophy, Zap, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { runTests } from "../utils/codeRunner";
 import { celebrateProblemSolved, celebrateBadgeEarned } from "@/utils/confetti";
+import { playSound } from "@/utils/sound";
 
 const ProblemDetail = () => {
   const { id } = useParams();
@@ -19,6 +20,7 @@ const ProblemDetail = () => {
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<any>(null);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -171,6 +173,7 @@ const ProblemDetail = () => {
       if (allPassed) {
         // Trigger problem solved celebration
         celebrateProblemSolved();
+        playSound('success');
 
         const pointsMessage = score > 0 ? ` +${score} points` : '';
         toast.success(`Problem Solved!${pointsMessage}`);
@@ -198,6 +201,9 @@ const ProblemDetail = () => {
         }
       } else {
         toast.error("Problem is wrong");
+        playSound('error');
+        setIsError(true);
+        setTimeout(() => setIsError(false), 500);
       }
 
     } catch (error: any) {
@@ -292,7 +298,7 @@ const ProblemDetail = () => {
           </Card>
 
           {/* Code Editor */}
-          <Card className="bg-gradient-card border-border/50 neon-border animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <Card className={`bg-gradient-card border-border/50 neon-border animate-slide-up ${isError ? 'animate-glitch' : ''}`} style={{ animationDelay: '0.1s' }}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
