@@ -43,6 +43,12 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  <script>
+    // Temporary: unregister service workers to avoid cached blank pages while we debug
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(()=>{});
+    }
+  </script>
 </body>
 
 </html>
