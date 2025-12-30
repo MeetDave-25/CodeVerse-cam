@@ -140,7 +140,10 @@ const ProblemDetail = () => {
         .eq("problem_id", problem.id);
 
       const hasPassed = previousSubmissions?.some(s => s.status === 'accepted');
-      const hasFailed = previousSubmissions?.some(s => s.status === 'failed');
+
+      // Count attempts that were not accepted (failed or wrong_answer)
+      // This includes any submission that didn't pass, regardless of specific status string
+      const failedAttempts = previousSubmissions?.filter(s => s.status !== 'accepted').length || 0;
 
       // Run tests
       const results = await runTests(code, problem.test_cases || [], problem.language || 'javascript');
@@ -151,8 +154,13 @@ const ProblemDetail = () => {
       // Calculate score
       let score = 0;
       if (allPassed && !hasPassed) {
-        // Half points if they failed before, otherwise full points
-        score = hasFailed ? Math.floor(problem.points / 2) : problem.points;
+        // Dynamic scoring: Deduct 1 point per failed attempt
+        // Ensure score doesn't drop below 50% of original points
+        const penaltyPerAttempt = 1;
+        const rawScore = problem.points - (failedAttempts * penaltyPerAttempt);
+        const minScore = Math.floor(problem.points * 0.5); // Minimum 50% points
+
+        score = Math.max(rawScore, minScore);
       }
 
       // Save submission
