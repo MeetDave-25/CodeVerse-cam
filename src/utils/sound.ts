@@ -55,59 +55,44 @@ const playSynthSound = (type: 'success' | 'error') => {
         sparkle.stop(now + 0.6);
 
     } else {
-        // GENTLE ERROR NOTIFICATION - Soft descending two-tone "boop-boop"
-        // A friendly, non-jarring notification that clearly indicates something went wrong
+        // MODERN "GOOD" ERROR SOUND - A clean, pleasing low "thump"
+        // A neutral/positive-leaning sound that notifies without scaring
 
-        // First tone (higher) - soft "boop"
-        const osc1 = audioContext.createOscillator();
-        const gain1 = audioContext.createGain();
-        
-        osc1.connect(gain1);
-        gain1.connect(audioContext.destination);
-        
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(440, now); // A4 note
-        
-        gain1.gain.setValueAtTime(0, now);
-        gain1.gain.linearRampToValueAtTime(0.25, now + 0.02); // Quick attack
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2); // Soft decay
-        
-        osc1.start(now);
-        osc1.stop(now + 0.2);
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
 
-        // Second tone (lower) - descending "boop"
-        const osc2 = audioContext.createOscillator();
-        const gain2 = audioContext.createGain();
-        
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
-        
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(349.23, now + 0.15); // F4 note (descending interval)
-        
-        gain2.gain.setValueAtTime(0, now + 0.15);
-        gain2.gain.linearRampToValueAtTime(0.2, now + 0.17); // Quick attack
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4); // Soft decay
-        
-        osc2.start(now + 0.15);
-        osc2.stop(now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
 
-        // Add subtle low warmth for a rounder feel
-        const bassOsc = audioContext.createOscillator();
-        const bassGain = audioContext.createGain();
-        
-        bassOsc.connect(bassGain);
-        bassGain.connect(audioContext.destination);
-        
-        bassOsc.type = 'sine';
-        bassOsc.frequency.setValueAtTime(220, now); // A3 (octave below)
-        
-        bassGain.gain.setValueAtTime(0, now);
-        bassGain.gain.linearRampToValueAtTime(0.08, now + 0.02);
-        bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        
-        bassOsc.start(now);
-        bassOsc.stop(now + 0.35);
+        osc.type = 'triangle'; // Triangle has a nice hollow, woody character
+
+        // Start at a pleasant low-mid frequency and pitch down slightly
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.2);
+
+        // Simple percussive envelope
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.25, now + 0.02); // Pop attack
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); // Quick fade
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+
+        // Add a second subtle sine wave for body
+        const subOsc = audioContext.createOscillator();
+        const subGain = audioContext.createGain();
+        subOsc.connect(subGain);
+        subGain.connect(audioContext.destination);
+
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(90, now); // Sub octave
+
+        subGain.gain.setValueAtTime(0, now);
+        subGain.gain.linearRampToValueAtTime(0.15, now + 0.02);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+        subOsc.start(now);
+        subOsc.stop(now + 0.4);
     }
 };
 
