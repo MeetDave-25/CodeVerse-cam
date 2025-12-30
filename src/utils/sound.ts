@@ -55,40 +55,52 @@ const playSynthSound = (type: 'success' | 'error') => {
         sparkle.stop(now + 0.6);
 
     } else {
-        // "BOOP-BOOP" ERROR SOUND - Friendly but clear "Wrong Answer"
-        // Two distinct descending tones to denote error without being harsh
+        // LONG MUSICAL ERROR - "Reflective" Minor Chord
+        // A pleasant but slightly sad sound that lasts 2-3 seconds
 
-        // Tone 1: High Boop
-        const osc1 = audioContext.createOscillator();
-        const gain1 = audioContext.createGain();
-        osc1.connect(gain1);
-        gain1.connect(audioContext.destination);
+        // A Minor Chord (A3 - C4 - E4) with a slow fade
+        const tones = [
+            { freq: 220.00, type: 'triangle' }, // A3
+            { freq: 261.63, type: 'sine' },     // C4 (Minor 3rd)
+            { freq: 329.63, type: 'sine' }      // E4
+        ];
 
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(450, now); // Slightly higher start
+        const duration = 2.5; // 2.5 seconds long
 
-        gain1.gain.setValueAtTime(0, now);
-        gain1.gain.linearRampToValueAtTime(0.2, now + 0.02);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        tones.forEach((tone, i) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
 
-        osc1.start(now);
-        osc1.stop(now + 0.15);
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
 
-        // Tone 2: Low Boop (Descending interval)
-        const osc2 = audioContext.createOscillator();
-        const gain2 = audioContext.createGain();
-        osc2.connect(gain2);
-        gain2.connect(audioContext.destination);
+            osc.type = tone.type as OscillatorType;
+            osc.frequency.setValueAtTime(tone.freq, now);
 
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(300, now + 0.18); // Clear drop in pitch
+            // Soft swell and long fade
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.15, now + 0.1 + (i * 0.05)); // Staggered soft attack
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-        gain2.gain.setValueAtTime(0, now + 0.18);
-        gain2.gain.linearRampToValueAtTime(0.2, now + 0.20);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.start(now);
+            osc.stop(now + duration);
+        });
 
-        osc2.start(now + 0.18);
-        osc2.stop(now + 0.4);
+        // Add a deep bass undertone for "weight"
+        const bass = audioContext.createOscillator();
+        const bassGain = audioContext.createGain();
+        bass.connect(bassGain);
+        bassGain.connect(audioContext.destination);
+
+        bass.type = 'sine';
+        bass.frequency.setValueAtTime(110.00, now); // A2
+
+        bassGain.gain.setValueAtTime(0, now);
+        bassGain.gain.linearRampToValueAtTime(0.1, now + 0.2);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + duration + 0.5); // Lasts slightly longer
+
+        bass.start(now);
+        bass.stop(now + duration + 0.5);
     }
 };
 
