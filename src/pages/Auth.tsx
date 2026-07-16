@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,17 +24,18 @@ const Auth = () => {
   const [signInRole, setSignInRole] = useState<"student" | "admin">("student");
   const [signUpRole, setSignUpRole] = useState<"student" | "admin">("student");
   const [collegeYear, setCollegeYear] = useState<number>(1);
+  const isRedirecting = useRef(false);
 
   useEffect(() => {
-    let isRedirecting = false;
+    isRedirecting.current = false;
 
     // Check if user is already logged in and redirect based on role
     const checkSessionAndRedirect = async () => {
-      if (isRedirecting) return;
+      if (isRedirecting.current) return;
 
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        isRedirecting = true;
+        isRedirecting.current = true;
 
         // Wait for strictly check ALL roles (handling potential duplicates)
         const { data: roles } = await supabase
@@ -58,21 +59,22 @@ const Auth = () => {
 
     checkSessionAndRedirect();
 
+    // onAuthStateChange handles page-refresh (INITIAL_SESSION) and sign-up (SIGNED_IN)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Only redirect on SIGNED_IN event to prevent loops
-      if (event === 'SIGNED_IN' && session?.user && !isRedirecting) {
-        isRedirecting = true;
-
-        const { data: roles } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id);
-
-        const isAdmin = roles?.some(r => r.role === 'admin');
-
-        if (isAdmin) {
-          navigate("/admin", { replace: true });
-        } else {
+      if (session?.user && !isRedirecting.current) {
+        if (event === 'INITIAL_SESSION') {
+          // Already logged in (page refresh) — redirect based on role
+          isRedirecting.current = true;
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id);
+          const isAdmin = roles?.some(r => r.role === 'admin');
+          navigate(isAdmin ? "/admin" : "/dashboard", { replace: true });
+        } else if (event === 'SIGNED_IN') {
+          // New sign-up (not sign-in — handleSignIn does its own navigation)
+          // Only redirect if we're in the sign-up flow (no role selected = student)
+          isRedirecting.current = true;
           navigate("/dashboard", { replace: true });
         }
       }
@@ -108,7 +110,13 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Account created! Redirecting to dashboard...");
+      // If email confirmation is disabled, user is immediately signed in
+      // The onAuthStateChange SIGNED_IN event will handle the redirect
+      toast.success("Account created! Taking you to dashboard...");
+      // Fallback navigate in case onAuthStateChange doesn't fire
+      setTimeout(() => {
+        if (!isRedirecting.current) navigate("/dashboard", { replace: true });
+      }, 1000);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -138,25 +146,12 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success("Welcome back!");
+      // Mark as redirecting BEFORE navigating to block onAuthStateChange SIGNED_IN
+      isRedirecting.current = true;
 
-      // Manually redirect after successful login
-      if (data.user) {
-        // Try to get user role with timeout
-        setTimeout(async () => {
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", data.user.id)
-            .maybeSingle();
-
-          if (roleData?.role === "admin") {
-            navigate("/admin", { replace: true });
-          } else {
-            navigate("/dashboard", { replace: true });
-          }
-        }, 500);
-      }
+      // Use the selected role for navigation (DB is still authoritative inside admin panel)
+      toast.success(signInRole === 'admin' ? "Welcome, Admin!" : "Welcome back!");
+      navigate(signInRole === 'admin' ? "/admin" : "/dashboard", { replace: true });
 
     } catch (error: any) {
       if (error instanceof z.ZodError) {

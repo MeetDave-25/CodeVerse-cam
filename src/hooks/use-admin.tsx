@@ -17,13 +17,13 @@ export const useAdmin = () => {
           const { data, error } = await supabase
             .from("user_roles")
             .select("role")
-            .eq("user_id", user.id)
-            .eq("role", "admin")
-            .maybeSingle();
+            .eq("user_id", user.id);
 
-          if (!error && data) {
-            setIsAdmin(true);
-          }
+          console.log("🔍 useAdmin role check:", { data, error, userId: user.id });
+
+          const isAdminUser = data?.some(r => r.role === 'admin') ?? false;
+          console.log("👑 isAdmin result:", isAdminUser);
+          setIsAdmin(isAdminUser);
         }
       } catch (error) {
         console.error("Error checking admin status:", error);
